@@ -1238,6 +1238,7 @@ OBJS = \
 	gimple.o \
 	gimple-builder.o \
 	gimple-expr.o \
+	spooky.o \
 	gimple-iterator.o \
 	gimple-fold.o \
 	gimple-low.o \
