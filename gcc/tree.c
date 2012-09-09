@@ -77,6 +77,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "intl.h"
 #include "wide-int.h"
 #include "builtins.h"
+#include "murmurhash3.h"
 
 /* Tree code classes.  */
 
@@ -6451,7 +6452,8 @@ tree_map_base_eq (const void *va, const void *vb)
 unsigned int
 tree_map_base_hash (const void *item)
 {
-  return htab_hash_pointer (((const struct tree_map_base *)item)->from);
+  return murmurhash3_32 (&((const struct tree_map_base *)item)->from, 
+			 sizeof (void *), 0);
 }
 
 /* Return true if this tree map structure is marked for garbage collection
