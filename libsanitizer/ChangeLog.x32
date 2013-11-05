@@ -1,0 +1,20 @@
+2013-11-05  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* sanitizer_common/sanitizer_linux.cc (internal_mmap): Cast
+	pointers to uptr for 64-bit syscalls.
+	(internal_munmap): Likewise.
+	(internal_open): Likewise.
+	(internal_read): Likewise.
+	(internal_write): Likewise.
+	(internal_stat): Likewise.
+	(internal_lstat): Likewise.
+	(internal_fstat): Likewise.
+	(internal_readlink): Likewise.
+	(internal_unlink): Likewise.
+	(internal_execve): Likewise.
+	(NanoTime): Likewise.
+	(BlockingMutex::Lock): Likewise.
+	(BlockingMutex::Unlock): Likewise.
+	(internal_ptrace): Likewise.
+	(internal_getdents): Likewise.
+	(internal_sigaltstack): Likewise.
