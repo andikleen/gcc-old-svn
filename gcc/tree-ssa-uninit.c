@@ -148,6 +148,8 @@ warn_uninit (enum opt_code wc, tree t, tree expr, tree var,
     location = phiarg_loc;
   else
     location = DECL_SOURCE_LOCATION (var);
+  if (has_discriminator (where))
+    where = map_discriminator_location (where);
   location = linemap_resolve_location (line_table, location,
 				       LRK_SPELLING_LOCATION,
 				       NULL);

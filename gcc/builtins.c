@@ -64,6 +64,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "rtl-chkp.h"
 #include "internal-fn.h"
 #include "case-cfn-macros.h"
+#include "input.h"
 
 
 struct target_builtins default_target_builtins;
@@ -8829,9 +8830,11 @@ fold_builtin_next_arg (tree exp, bool va_start_p)
      definition of the va_start macro (perhaps on the token for
      builtin) in a system header, so warnings will not be emitted.
      Use the location in real source code.  */
+  location_t loc = LOCATION_LOCUS (input_location);
+  if (has_discriminator (loc))
+    loc = map_discriminator_location (loc);
   source_location current_location =
-    linemap_unwind_to_first_non_reserved_loc (line_table, input_location,
-					      NULL);
+    linemap_unwind_to_first_non_reserved_loc (line_table, loc, NULL);
 
   if (!stdarg_p (fntype))
     {

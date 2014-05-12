@@ -989,6 +989,7 @@ void
 dump_location (pretty_printer *pp, location_t loc)
 {
   expanded_location xloc = expand_location (loc);
+  int discriminator = get_discriminator_from_locus (loc);
 
   pp_left_bracket (pp);
   if (xloc.file)
@@ -999,7 +1000,12 @@ dump_location (pretty_printer *pp, location_t loc)
   pp_decimal_int (pp, xloc.line);
   pp_colon (pp);
   pp_decimal_int (pp, xloc.column);
-  pp_string (pp, "] ");
+  if (discriminator)
+    {
+      pp_string (buffer, " discrim ");
+      pp_decimal_int (buffer, discriminator);
+    }
+  pp_string (buffer, "] ");
 }
 
 

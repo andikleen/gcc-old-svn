@@ -507,6 +507,7 @@ void
 diagnostic_report_current_module (diagnostic_context *context, location_t where)
 {
   const line_map_ordinary *map = NULL;
+  location = map_discriminator_location (location);
 
   if (pp_needs_newline (context->printer))
     {
@@ -516,6 +517,8 @@ diagnostic_report_current_module (diagnostic_context *context, location_t where)
 
   if (where <= BUILTINS_LOCATION)
     return;
+  if (has_discriminator (where))
+    where = map_discriminator_location (where);
 
   linemap_resolve_location (line_table, where,
 			    LRK_MACRO_DEFINITION_LOCATION,
