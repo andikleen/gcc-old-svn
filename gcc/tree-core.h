@@ -720,6 +720,7 @@ typedef tree (*walk_tree_lh) (tree *, int *, tree (*) (tree *, int *, void *),
    accessor macros.  */
 
 struct GTY(()) tree_base {
+  /* When you change the size please fix the LTO type hashing.  */
   ENUM_BITFIELD(tree_code) code : 16;
 
   unsigned side_effects_flag : 1;
@@ -765,6 +766,8 @@ struct GTY(()) tree_base {
       /* This field is only used with TREE_TYPE nodes; the only reason it is
 	 present in tree_base instead of tree_type is to save space.  The size
 	 of the field must be large enough to hold addr_space_t values.  */
+
+      /* When you change the size please fix the LTO type hashing.  */
       unsigned address_space : 8;
     } bits;
 
@@ -1282,6 +1285,7 @@ struct GTY(()) tree_type_common {
   tree attributes;
   unsigned int uid;
 
+  /* When you change the size please fix the LTO type hashing.  */
   unsigned int precision : 10;
   unsigned no_force_blk_flag : 1;
   unsigned needs_constructing_flag : 1;
@@ -1289,6 +1293,7 @@ struct GTY(()) tree_type_common {
   unsigned restrict_flag : 1;
   unsigned contains_placeholder_bits : 2;
 
+  /* When you change the size please fix the LTO type hashing.  */
   ENUM_BITFIELD(machine_mode) mode : 8;
 
   unsigned string_flag : 1;
