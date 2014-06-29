@@ -281,13 +281,13 @@ struct pointer_hash : typed_noop_remove <Type>
   static inline bool equal (const value_type &existing, const compare_type &candidate);
 };
 
+#include "murmurhash3.h"
+
 template <typename Type>
 inline hashval_t
 pointer_hash <Type>::hash (const value_type &candidate)
 {
-  /* This is a really poor hash function, but it is what the current code uses,
-     so I am reusing it to avoid an additional axis in testing.  */
-  return (hashval_t) ((intptr_t)candidate >> 3);
+  return murmurhash3_32 (&candidate, sizeof (intptr_t), 0);
 }
 
 template <typename Type>
