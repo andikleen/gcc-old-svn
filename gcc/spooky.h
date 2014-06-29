@@ -430,15 +430,17 @@ public:
   uint32_t end()
   {
     uint64_t a = 0, b = 0;
-    Final(&a, &b);
+    Final (&a, &b);
     return a;
   }
   void merge(Spooky &o)
   {
-    Update (o.m_data, sizeof(m_data));
-    Update (o.m_state, sizeof(m_state));
-    Update (&o.m_length, sizeof(m_length));
-    Update (&o.m_remainder, sizeof(m_remainder));
+    //Update (o.m_data, o.m_remainder);
+    //Update (o.m_state, sizeof(m_state));
+    uint64_t a = 0, b = 0;
+    o.Final (&a, &b);
+    add_wide_int (a);
+    add_wide_int (b);
   }
 
 private:
