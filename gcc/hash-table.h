@@ -645,9 +645,20 @@ hash_table<Descriptor, Allocator, false>::hash_table (size_t size) :
   m_size_prime_index = size_prime_index;
 }
 
+#include <stdio.h>
+#include <unistd.h>
+
 template<typename Descriptor, template<typename Type> class Allocator>
 hash_table<Descriptor, Allocator, false>::~hash_table ()
 {
+#if HASH_STATS
+  FILE *f = fopen("/tmp/hashstat", "a");
+  if (f)
+    fprintf (f, "%d hash size %lu ele %lu searches %u coll %u %.f\n", 
+		    getpid(), m_size, m_n_elements,  m_searches, m_collisions, collisions());
+  fclose(f);
+#endif
+
   for (size_t i = m_size - 1; i < m_size; i--)
     if (m_entries[i] != HTAB_EMPTY_ENTRY && m_entries[i] != HTAB_DELETED_ENTRY)
       Descriptor::remove (m_entries[i]);
@@ -1166,6 +1177,15 @@ hash_table<Descriptor, Allocator, true>::hash_table (size_t size) :
 template<typename Descriptor, template<typename Type> class Allocator>
 hash_table<Descriptor, Allocator, true>::~hash_table ()
 {
+#if HASH_STATS
+  FILE *f = fopen("/tmp/hashstat", "a");
+  if (f)
+    fprintf (f, "%d hash size %lu ele %lu searches %u coll %u %.f\n", 
+		    getpid(), m_size, m_n_elements,  m_searches, m_collisions, collisions());
+  fclose(f);
+#endif
+
+
   for (size_t i = m_size - 1; i < m_size; i--)
     if (!is_empty (m_entries[i]) && !is_deleted (m_entries[i]))
       Descriptor::remove (m_entries[i]);
