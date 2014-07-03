@@ -327,11 +327,10 @@ hash_canonical_type (tree type)
       extra_bits = (extra_bits << 1) | TYPE_STRING_FLAG (type);
       /* OMP lowering can introduce error_mark_node in place of
 	 random local decls in types.  */
-      /* TBD: convert iterative_hash_expr to new hash too.  */
       if (TYPE_MIN_VALUE (TYPE_DOMAIN (type)) != error_mark_node)
-	hstate.add_int (iterative_hash_expr (TYPE_MIN_VALUE (TYPE_DOMAIN (type)), 0));
+	iterative_hstate_expr (TYPE_MIN_VALUE (TYPE_DOMAIN (type)), hstate);
       if (TYPE_MAX_VALUE (TYPE_DOMAIN (type)) != error_mark_node)
-	hstate.add_int (iterative_hash_expr (TYPE_MAX_VALUE (TYPE_DOMAIN (type)), 0));
+	iterative_hstate_expr (TYPE_MAX_VALUE (TYPE_DOMAIN (type)), hstate);
     }
 
   /* Recurse for aggregates with a single element type.  */

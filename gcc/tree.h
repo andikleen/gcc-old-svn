@@ -22,6 +22,7 @@ along with GCC; see the file COPYING3.  If not see
 
 #include "tree-core.h"
 #include "wide-int.h"
+#include "typehash.h"
 
 /* These includes are required here because they provide declarations
    used by inline functions in this file.
@@ -4287,7 +4288,18 @@ extern int tree_log2 (const_tree);
 extern int tree_floor_log2 (const_tree);
 extern unsigned int tree_ctz (const_tree);
 extern int simple_cst_equal (const_tree, const_tree);
-extern hashval_t iterative_hash_expr (const_tree, hashval_t);
+extern void iterative_hstate_expr (const_tree, type_incr_hash &);
+
+/* Compat version until all callers are converted. Return hash for
+   TREE with SEED.  */
+static inline hashval_t iterative_hash_expr(const_tree tree, hashval_t seed)
+{
+  type_incr_hash hstate;
+  hstate.begin (seed);
+  iterative_hstate_expr (tree, hstate);
+  return hstate.end ();
+}
+
 extern hashval_t iterative_hash_host_wide_int (HOST_WIDE_INT, hashval_t);
 extern hashval_t iterative_hash_hashval_t (hashval_t, hashval_t);
 extern hashval_t iterative_hash_host_wide_int (HOST_WIDE_INT, hashval_t);
