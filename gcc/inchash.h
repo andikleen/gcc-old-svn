@@ -76,10 +76,16 @@ class inchash
     val = iterative_hash (data, len, val);
   }
 
+  /* Merge hash value OTHER.  */
+  void merge_hash (hashval_t other)
+  {
+    val = iterative_hash_hashval_t (other, val);
+  }
+
   /* Hash in state from other inchash OTHER.  */
   void merge (inchash &other)
   {
-    val = iterative_hash_hashval_t (other.val, val);
+    merge_hash (other.val);
   }
 
   /* Support for accumulating boolean flags */
@@ -117,5 +123,7 @@ class inchash
   hashval_t val;
   unsigned bits;
 };
+
+#define add_object(o) add (&(o), sizeof (o))
 
 #endif
