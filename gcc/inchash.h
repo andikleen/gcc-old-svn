@@ -82,6 +82,8 @@ class inchash
     val = iterative_hash_hashval_t (other.val, val);
   }
 
+  /* Support for accumulating boolean flags */
+
   void add_flag (bool flag)
   {
     bits = (bits << 1) | flag;
@@ -91,6 +93,24 @@ class inchash
   {
     add_int (bits);
     bits = 0;
+  }
+
+  /* Support for commutative hashing. Add A and B in a defined order
+     based on their value. This is useful for hashing commutative
+     expressions, so that A+B and B+A get the same hash.  */
+
+  void add_commutative (inchash &a, inchash &b)
+  {
+    if (a.end() > b.end())
+      {
+        merge (b);
+	merge (a);
+      }
+    else
+      {
+        merge (a);
+        merge (b);
+      }
   }
 
  private:
