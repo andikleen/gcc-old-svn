@@ -694,7 +694,6 @@ hash_tree (struct streamer_tree_cache_d *cache, tree t)
 {
   inchash hstate;
   unsigned extra_bits = 0;
-  hstate.begin ();
 
 #define visit(SIBLING) \
   do { \
