@@ -37,11 +37,10 @@ extern hashval_t iterative_hash_hashval_t (hashval_t, hashval_t);
 
 class inchash
 {
-  hashval_t val;
  public:
 
   /* Start incremential hashing, optionally with SEED.  */
-  void begin (hashval_t seed = 0)
+  inchash (hashval_t seed = 0)
   {
     val = seed;
   }
@@ -81,6 +80,9 @@ class inchash
   {
     val = iterative_hash_hashval_t (other.val, val);
   }
+
+ private:
+  hashval_t val;
 };
 
 #endif
