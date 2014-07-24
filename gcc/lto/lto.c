@@ -281,8 +281,6 @@ hash_canonical_type (tree type)
 {
   inchash hstate;
 
-  hstate.begin ();
-
   /* Combine a few common features of types so that types are grouped into
      smaller sets; when searching for existing matching types to merge,
      only existing types having the same features as the new type will be
