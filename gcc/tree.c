@@ -4599,8 +4599,6 @@ build_type_attribute_qual_variant (tree ttype, tree attribute, int quals)
       tree t;
       enum tree_code code = TREE_CODE (ttype);
 
-      hstate.begin ();
-
       /* Building a distinct copy of a tagged type is inappropriate; it
 	 causes breakage in code that expects there to be a one-to-one
 	 relationship between a struct and its fields.
@@ -7719,7 +7717,6 @@ build_range_type_1 (tree type, tree lowval, tree highval, bool shared)
 {
   tree itype = make_node (INTEGER_TYPE);
   inchash hstate;
-  hstate.begin ();
 
   TREE_TYPE (itype) = type;
 
@@ -7855,9 +7852,7 @@ build_array_type_1 (tree elt_type, tree index_type, bool shared)
 
   if (shared)
     {
-      inchash hstate;
-      hstate.begin ();
-      hstate.add_int (TYPE_HASH (elt_type));
+      inchash hstate (TYPE_HASH (elt_type));
       if (index_type)
 	hstate.add_int (TYPE_HASH (index_type));
       t = type_hash_canon (hstate.end (), t);
@@ -8003,8 +7998,6 @@ build_function_type (tree value_type, tree arg_types)
   inchash hstate;
   bool any_structural_p, any_noncanonical_p;
   tree canon_argtypes;
-
-  hstate.begin ();
 
   if (TREE_CODE (value_type) == FUNCTION_TYPE)
     {
@@ -8161,8 +8154,6 @@ build_method_type_directly (tree basetype,
   bool any_structural_p, any_noncanonical_p;
   tree canon_argtypes;
 
-  hstate.begin ();
-
   /* Make a node of the sort we want.  */
   t = make_node (METHOD_TYPE);
 
@@ -8229,8 +8220,6 @@ build_offset_type (tree basetype, tree type)
   tree t;
   inchash hstate;
 
-  hstate.begin ();
-
   /* Make a node of the sort we want.  */
   t = make_node (OFFSET_TYPE);
 
@@ -8267,8 +8256,6 @@ build_complex_type (tree component_type)
 {
   tree t;
   inchash hstate;
-
-  hstate.begin ();
 
   gcc_assert (INTEGRAL_TYPE_P (component_type)
 	      || SCALAR_FLOAT_TYPE_P (component_type)
@@ -9421,8 +9408,6 @@ make_vector_type (tree innertype, int nunits, enum machine_mode mode)
 {
   tree t;
   inchash hstate;
-
-  hstate.begin ();
 
   t = make_node (VECTOR_TYPE);
   TREE_TYPE (t) = TYPE_MAIN_VARIANT (innertype);
