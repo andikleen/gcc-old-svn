@@ -4623,7 +4623,7 @@ build_type_attribute_qual_variant (tree ttype, tree attribute, int quals)
 
       hstate.add_int (code);
       if (TREE_TYPE (ntype))
-	hstate.add_int (TYPE_HASH (TREE_TYPE (ntype)));
+	hstate.add_object (TYPE_HASH (TREE_TYPE (ntype)));
       attribute_hash_list (attribute, hstate);
 
       switch (TREE_CODE (ntype))
@@ -4633,18 +4633,18 @@ build_type_attribute_qual_variant (tree ttype, tree attribute, int quals)
 	  break;
 	case ARRAY_TYPE:
 	  if (TYPE_DOMAIN (ntype))
-	    hstate.add_int (TYPE_HASH (TYPE_DOMAIN (ntype)));
+	    hstate.add_object (TYPE_HASH (TYPE_DOMAIN (ntype)));
 	  break;
 	case INTEGER_TYPE:
 	  t = TYPE_MAX_VALUE (ntype);
 	  for (i = 0; i < TREE_INT_CST_NUNITS (t); i++)
-	    hstate.add_int (TREE_INT_CST_ELT (t, i));
+	    hstate.add_object (TREE_INT_CST_ELT (t, i));
 	  break;
 	case REAL_TYPE:
 	case FIXED_POINT_TYPE:
 	  {
 	    unsigned int precision = TYPE_PRECISION (ntype);
-	    hstate.add_int (precision);
+	    hstate.add_object (precision);
 	  }
 	  break;
 	default:
@@ -6637,7 +6637,7 @@ type_hash_list (const_tree list, inchash &hstate)
 
   for (tail = list; tail; tail = TREE_CHAIN (tail))
     if (TREE_VALUE (tail) != error_mark_node)
-      hstate.add_int (TYPE_HASH (TREE_VALUE (tail)));
+      hstate.add_object (TYPE_HASH (TREE_VALUE (tail)));
 }
 
 /* These are the Hashtable callback functions.  */
@@ -6872,7 +6872,7 @@ attribute_hash_list (const_tree list, inchash &hstate)
 
   for (tail = list; tail; tail = TREE_CHAIN (tail))
     /* ??? Do we want to add in TREE_VALUE too? */
-    hstate.add_int (IDENTIFIER_HASH_VALUE (get_attribute_name (tail)));
+    hstate.add_object (IDENTIFIER_HASH_VALUE (get_attribute_name (tail)));
 }
 
 /* Given two lists of attributes, return true if list l2 is
@@ -7398,7 +7398,7 @@ iterative_hstate_expr (const_tree t, inchash &hstate)
 
   if (t == NULL_TREE)
     {
-      hstate.add_int (0);
+      hstate.merge_hash (0);
       return;
     }
 
@@ -7409,7 +7409,7 @@ iterative_hstate_expr (const_tree t, inchash &hstate)
     /* Alas, constants aren't shared, so we can't rely on pointer
        identity.  */
     case VOID_CST:
-      hstate.add_int (0);
+      hstate.merge_hash (0);
       return;
     case INTEGER_CST:
       for (i = 0; i < TREE_INT_CST_NUNITS (t); i++)
@@ -7418,13 +7418,13 @@ iterative_hstate_expr (const_tree t, inchash &hstate)
     case REAL_CST:
       {
 	unsigned int val2 = real_hash (TREE_REAL_CST_PTR (t));
-	hstate.add_int (val2);
+	hstate.merge_hash (val2);
 	return;
       }
     case FIXED_CST:
       {
 	unsigned int val2 = fixed_hash (TREE_FIXED_CST_PTR (t));
-	hstate.add_int (val2);
+	hstate.merge_hash (val2);
 	return;
       }
     case STRING_CST:
@@ -7490,7 +7490,7 @@ iterative_hstate_expr (const_tree t, inchash &hstate)
 	{
 	  gcc_assert (IS_EXPR_CODE_CLASS (tclass));
 
-	  hstate.add_int (code);
+	  hstate.add_object (code);
 
 	  /* Don't hash the type, that can lead to having nodes which
 	     compare equal according to operand_equal_p, but which
@@ -7741,7 +7741,7 @@ build_range_type_1 (tree type, tree lowval, tree highval, bool shared)
 
   iterative_hstate_expr (TYPE_MIN_VALUE (itype), hstate);
   iterative_hstate_expr (TYPE_MAX_VALUE (itype), hstate);
-  hstate.add_int (TYPE_HASH (type));
+  hstate.merge_hash (TYPE_HASH (type));
   itype = type_hash_canon (hstate.end (), itype);
 
   return itype;
@@ -7847,9 +7847,10 @@ build_array_type_1 (tree elt_type, tree index_type, bool shared)
 
   if (shared)
     {
-      inchash hstate (TYPE_HASH (elt_type));
+      inchash hstate;
+      hstate.add_object (TYPE_HASH (elt_type));
       if (index_type)
-	hstate.add_int (TYPE_HASH (index_type));
+	hstate.add_object (TYPE_HASH (index_type));
       t = type_hash_canon (hstate.end (), t);
     }
 
@@ -8006,7 +8007,7 @@ build_function_type (tree value_type, tree arg_types)
   TYPE_ARG_TYPES (t) = arg_types;
 
   /* If we already have such a type, use the old one.  */
-  hstate.add_int (TYPE_HASH (value_type));
+  hstate.add_object (TYPE_HASH (value_type));
   type_hash_list (arg_types, hstate);
   t = type_hash_canon (hstate.end (), t);
 
@@ -8162,8 +8163,8 @@ build_method_type_directly (tree basetype,
   TYPE_ARG_TYPES (t) = argtypes;
 
   /* If we already have such a type, use the old one.  */
-  hstate.add_int (TYPE_HASH (basetype));
-  hstate.add_int (TYPE_HASH (rettype));
+  hstate.add_object (TYPE_HASH (basetype));
+  hstate.add_object (TYPE_HASH (rettype));
   type_hash_list (argtypes, hstate);
   t = type_hash_canon (hstate.end (), t);
 
@@ -8222,8 +8223,8 @@ build_offset_type (tree basetype, tree type)
   TREE_TYPE (t) = type;
 
   /* If we already have such a type, use the old one.  */
-  hstate.add_int (TYPE_HASH (basetype));
-  hstate.add_int (TYPE_HASH (type));
+  hstate.add_object (TYPE_HASH (basetype));
+  hstate.add_object (TYPE_HASH (type));
   t = type_hash_canon (hstate.end (), t);
 
   if (!COMPLETE_TYPE_P (t))
@@ -8262,7 +8263,7 @@ build_complex_type (tree component_type)
   TREE_TYPE (t) = TYPE_MAIN_VARIANT (component_type);
 
   /* If we already have such a type, use the old one.  */
-  hstate.add_int (TYPE_HASH (component_type));
+  hstate.add_object (TYPE_HASH (component_type));
   t = type_hash_canon (hstate.end (), t);
 
   if (!COMPLETE_TYPE_P (t))
@@ -9418,10 +9419,10 @@ make_vector_type (tree innertype, int nunits, enum machine_mode mode)
 
   layout_type (t);
 
-  hstate.add_int (VECTOR_TYPE);
-  hstate.add_int (nunits);
-  hstate.add_int (mode);
-  hstate.add_int (TYPE_HASH (TREE_TYPE (t)));
+  hstate.add_wide_int (VECTOR_TYPE);
+  hstate.add_wide_int (nunits);
+  hstate.add_wide_int (mode);
+  hstate.add_object (TYPE_HASH (TREE_TYPE (t)));
   t = type_hash_canon (hstate.end (), t);
 
   /* We have built a main variant, based on the main variant of the
