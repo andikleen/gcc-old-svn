@@ -7509,15 +7509,10 @@ iterative_hstate_expr (const_tree t, inchash &hstate)
 		 however it appears.  We do this by first hashing both operands
 		 and then rehashing based on the order of their independent
 		 hashes.  */
-	      hashval_t one = iterative_hash_expr (TREE_OPERAND (t, 0), 0);
-	      hashval_t two = iterative_hash_expr (TREE_OPERAND (t, 1), 0);
-	      hashval_t t;
-
-	      if (one > two)
-		t = one, one = two, two = t;
-
-	      hstate.add_int (one);
-	      hstate.add_int (two);
+	      inchash one, two;
+	      iterative_hstate_expr (TREE_OPERAND (t, 0), one);
+	      iterative_hstate_expr (TREE_OPERAND (t, 1), two);
+	      hstate.add_commutative (one, two);
 	    }
 	  else
 	    for (i = TREE_OPERAND_LENGTH (t) - 1; i >= 0; --i)
