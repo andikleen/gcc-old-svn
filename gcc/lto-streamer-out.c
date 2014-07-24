@@ -895,7 +895,7 @@ hash_tree (struct streamer_tree_cache_d *cache, tree t)
     hstate.add (t, sizeof (struct cl_optimization));
 
   if (CODE_CONTAINS_STRUCT (code, TS_IDENTIFIER))
-    hstate.add_int (IDENTIFIER_HASH_VALUE (t));
+    hstate.merge_hash (IDENTIFIER_HASH_VALUE (t));
 
   if (CODE_CONTAINS_STRUCT (code, TS_STRING))
     hstate.add (TREE_STRING_POINTER (t), TREE_STRING_LENGTH (t));
@@ -916,7 +916,7 @@ hash_tree (struct streamer_tree_cache_d *cache, tree t)
 	    x = streamer_tree_cache_get_hash (cache, ix);
 	  else
 	    x = hash_tree (cache, TREE_TYPE (t));
-	  hstate.add_int (x);
+	  hstate.merge_hash (x);
 	}
       else if (code != IDENTIFIER_NODE)
 	visit (TREE_TYPE (t));
@@ -1038,7 +1038,7 @@ hash_tree (struct streamer_tree_cache_d *cache, tree t)
 
   if (CODE_CONTAINS_STRUCT (code, TS_EXP))
     {
-      hstate.add_int (TREE_OPERAND_LENGTH (t));
+      hstate.add_wide_int (TREE_OPERAND_LENGTH (t));
       for (int i = 0; i < TREE_OPERAND_LENGTH (t); ++i)
 	visit (TREE_OPERAND (t, i));
     }
@@ -1062,7 +1062,7 @@ hash_tree (struct streamer_tree_cache_d *cache, tree t)
     {
       unsigned i;
       tree index, value;
-      hstate.add_int (CONSTRUCTOR_NELTS (t));
+      hstate.add_wide_int (CONSTRUCTOR_NELTS (t));
       FOR_EACH_CONSTRUCTOR_ELT (CONSTRUCTOR_ELTS (t), i, index, value)
 	{
 	  visit (index);
@@ -1073,9 +1073,9 @@ hash_tree (struct streamer_tree_cache_d *cache, tree t)
   if (code == OMP_CLAUSE)
     {
       int i;
-      unsigned val;
+      HOST_WIDE_INT val;
 
-      hstate.add_int (OMP_CLAUSE_CODE (t));
+      hstate.add_wide_int (OMP_CLAUSE_CODE (t));
       switch (OMP_CLAUSE_CODE (t))
 	{
 	case OMP_CLAUSE_DEFAULT:
@@ -1100,7 +1100,7 @@ hash_tree (struct streamer_tree_cache_d *cache, tree t)
 	  val = 0;
 	  break;
 	}
-      hstate.add_int (val);
+      hstate.add_wide_int (val);
       for (i = 0; i < omp_clause_num_ops[OMP_CLAUSE_CODE (t)]; i++)
 	visit (OMP_CLAUSE_OPERAND (t, i));
       visit (OMP_CLAUSE_CHAIN (t));
