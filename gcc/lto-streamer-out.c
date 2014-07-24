@@ -693,7 +693,6 @@ static hashval_t
 hash_tree (struct streamer_tree_cache_d *cache, tree t)
 {
   inchash hstate;
-  unsigned extra_bits = 0;
 
 #define visit(SIBLING) \
   do { \
@@ -701,45 +700,41 @@ hash_tree (struct streamer_tree_cache_d *cache, tree t)
     if (SIBLING && streamer_tree_cache_lookup (cache, SIBLING, &ix)) \
       hstate.add_int (streamer_tree_cache_get_hash (cache, ix)); \
   } while (0)
-#define add_flag(flag) \
-  do { extra_bits = (extra_bits << 1) | flag; } while (0)
-#define commit_flag() \
-  do { hstate.add_int (extra_bits); extra_bits = 0; } while (0)
 
   /* Hash TS_BASE.  */
   enum tree_code code = TREE_CODE (t);
   hstate.add_int (code);
   if (!TYPE_P (t))
     {
-      add_flag (TREE_SIDE_EFFECTS (t));
-      add_flag (TREE_CONSTANT (t));
-      add_flag (TREE_READONLY (t));
-      add_flag (TREE_PUBLIC (t));
+      hstate.add_flag (TREE_SIDE_EFFECTS (t));
+      hstate.add_flag (TREE_CONSTANT (t));
+      hstate.add_flag (TREE_READONLY (t));
+      hstate.add_flag (TREE_PUBLIC (t));
     }
-  add_flag (TREE_ADDRESSABLE (t));
-  add_flag (TREE_THIS_VOLATILE (t));
+  hstate.add_flag (TREE_ADDRESSABLE (t));
+  hstate.add_flag (TREE_THIS_VOLATILE (t));
   if (DECL_P (t))
-    add_flag (DECL_UNSIGNED (t));
+    hstate.add_flag (DECL_UNSIGNED (t));
   else if (TYPE_P (t))
-    add_flag (TYPE_UNSIGNED (t));
+    hstate.add_flag (TYPE_UNSIGNED (t));
   if (TYPE_P (t))
-    add_flag (TYPE_ARTIFICIAL (t));
+    hstate.add_flag (TYPE_ARTIFICIAL (t));
   else
-    add_flag (TREE_NO_WARNING (t));
-  add_flag (TREE_NOTHROW (t));
-  add_flag (TREE_STATIC (t));
-  add_flag (TREE_PROTECTED (t));
-  add_flag (TREE_DEPRECATED (t));
+    hstate.add_flag (TREE_NO_WARNING (t));
+  hstate.add_flag (TREE_NOTHROW (t));
+  hstate.add_flag (TREE_STATIC (t));
+  hstate.add_flag (TREE_PROTECTED (t));
+  hstate.add_flag (TREE_DEPRECATED (t));
   if (code != TREE_BINFO)
-    add_flag (TREE_PRIVATE (t));
+    hstate.add_flag (TREE_PRIVATE (t));
   if (TYPE_P (t))
     {
-      add_flag (TYPE_SATURATING (t));
-      add_flag (TYPE_ADDR_SPACE (t));
+      hstate.add_flag (TYPE_SATURATING (t));
+      hstate.add_flag (TYPE_ADDR_SPACE (t));
     }
   else if (code == SSA_NAME)
-    add_flag (SSA_NAME_IS_DEFAULT_DEF (t));
-  commit_flag ();
+    hstate.add_flag (SSA_NAME_IS_DEFAULT_DEF (t));
+  hstate.commit_flag ();
 
   if (CODE_CONTAINS_STRUCT (code, TS_INT_CST))
     {
@@ -753,11 +748,11 @@ hash_tree (struct streamer_tree_cache_d *cache, tree t)
   if (CODE_CONTAINS_STRUCT (code, TS_REAL_CST))
     {
       REAL_VALUE_TYPE r = TREE_REAL_CST (t);
-      add_flag (r.cl);
-      add_flag (r.sign);
-      add_flag (r.signalling);
-      add_flag (r.canonical);
-      commit_flag ();
+      hstate.add_flag (r.cl);
+      hstate.add_flag (r.sign);
+      hstate.add_flag (r.signalling);
+      hstate.add_flag (r.canonical);
+      hstate.commit_flag ();
       hstate.add_int (r.uexp);
       hstate.add (r.sig, sizeof (r.sig));
     }
@@ -772,17 +767,17 @@ hash_tree (struct streamer_tree_cache_d *cache, tree t)
 
   if (CODE_CONTAINS_STRUCT (code, TS_DECL_COMMON))
     {
-      add_flag (DECL_MODE (t));
-      add_flag (DECL_NONLOCAL (t));
-      add_flag (DECL_VIRTUAL_P (t));
-      add_flag (DECL_IGNORED_P (t));
-      add_flag (DECL_ABSTRACT (t));
-      add_flag (DECL_ARTIFICIAL (t));
-      add_flag (DECL_USER_ALIGN (t));
-      add_flag (DECL_PRESERVE_P (t));
-      add_flag (DECL_EXTERNAL (t));
-      add_flag (DECL_GIMPLE_REG_P (t));
-      commit_flag ();
+      hstate.add_wide_int (DECL_MODE (t));
+      hstate.add_flag (DECL_NONLOCAL (t));
+      hstate.add_flag (DECL_VIRTUAL_P (t));
+      hstate.add_flag (DECL_IGNORED_P (t));
+      hstate.add_flag (DECL_ABSTRACT (t));
+      hstate.add_flag (DECL_ARTIFICIAL (t));
+      hstate.add_flag (DECL_USER_ALIGN (t));
+      hstate.add_flag (DECL_PRESERVE_P (t));
+      hstate.add_flag (DECL_EXTERNAL (t));
+      hstate.add_flag (DECL_GIMPLE_REG_P (t));
+      hstate.commit_flag ();
       hstate.add_int (DECL_ALIGN (t));
       if (code == LABEL_DECL)
 	{
@@ -791,24 +786,25 @@ hash_tree (struct streamer_tree_cache_d *cache, tree t)
 	}
       else if (code == FIELD_DECL)
 	{
-	  add_flag (DECL_PACKED (t));
-	  add_flag (DECL_NONADDRESSABLE_P (t));
+	  hstate.add_flag (DECL_PACKED (t));
+	  hstate.add_flag (DECL_NONADDRESSABLE_P (t));
 	  hstate.add_int (DECL_OFFSET_ALIGN (t));
 	}
       else if (code == VAR_DECL)
 	{
-	  add_flag (DECL_HAS_DEBUG_EXPR_P (t));
-	  add_flag (DECL_NONLOCAL_FRAME (t));
+	  hstate.add_flag (DECL_HAS_DEBUG_EXPR_P (t));
+	  hstate.add_flag (DECL_NONLOCAL_FRAME (t));
 	}
       if (code == RESULT_DECL
 	  || code == PARM_DECL
 	  || code == VAR_DECL)
 	{
-	  add_flag (DECL_BY_REFERENCE (t));
+	  hstate.add_flag (DECL_BY_REFERENCE (t));
 	  if (code == VAR_DECL
 	      || code == PARM_DECL)
-	    add_flag (DECL_HAS_VALUE_EXPR_P (t));
+	    hstate.add_flag (DECL_HAS_VALUE_EXPR_P (t));
 	}
+      hstate.commit_flag ();
     }
 
   if (CODE_CONTAINS_STRUCT (code, TS_DECL_WRTL))
@@ -816,69 +812,70 @@ hash_tree (struct streamer_tree_cache_d *cache, tree t)
 
   if (CODE_CONTAINS_STRUCT (code, TS_DECL_WITH_VIS))
     {
-      add_flag (DECL_COMMON (t));
-      add_flag (DECL_DLLIMPORT_P (t));
-      add_flag (DECL_WEAK (t));
-      add_flag (DECL_SEEN_IN_BIND_EXPR_P (t));
-      add_flag (DECL_COMDAT (t));
-      add_flag (DECL_VISIBILITY_SPECIFIED (t));
+      hstate.add_flag (DECL_COMMON (t));
+      hstate.add_flag (DECL_DLLIMPORT_P (t));
+      hstate.add_flag (DECL_WEAK (t));
+      hstate.add_flag (DECL_SEEN_IN_BIND_EXPR_P (t));
+      hstate.add_flag (DECL_COMDAT (t));
+      hstate.add_flag (DECL_VISIBILITY_SPECIFIED (t));
       hstate.add_int (DECL_VISIBILITY (t));
       if (code == VAR_DECL)
 	{
 	  /* DECL_IN_TEXT_SECTION is set during final asm output only.  */
-	  add_flag (DECL_HARD_REGISTER (t));
-	  add_flag (DECL_IN_CONSTANT_POOL (t));
+	  hstate.add_flag (DECL_HARD_REGISTER (t));
+	  hstate.add_flag (DECL_IN_CONSTANT_POOL (t));
 	}
       if (TREE_CODE (t) == FUNCTION_DECL)
         {
-	  add_flag (DECL_FINAL_P (t));
-	  add_flag (DECL_CXX_CONSTRUCTOR_P (t));
-	  add_flag (DECL_CXX_DESTRUCTOR_P (t));
+	  hstate.add_flag (DECL_FINAL_P (t));
+	  hstate.add_flag (DECL_CXX_CONSTRUCTOR_P (t));
+	  hstate.add_flag (DECL_CXX_DESTRUCTOR_P (t));
 	}
-      commit_flag ();
+      hstate.commit_flag ();
     }
 
   if (CODE_CONTAINS_STRUCT (code, TS_FUNCTION_DECL))
     {
       hstate.add_int (DECL_BUILT_IN_CLASS (t));
-      hstate.add_int (DECL_STATIC_CONSTRUCTOR (t)
-				| (DECL_STATIC_DESTRUCTOR (t) << 1)
-				| (DECL_UNINLINABLE (t) << 2)
-				| (DECL_POSSIBLY_INLINED (t) << 3)
-				| (DECL_IS_NOVOPS (t) << 4)
-				| (DECL_IS_RETURNS_TWICE (t) << 5)
-				| (DECL_IS_MALLOC (t) << 6)
-				| (DECL_IS_OPERATOR_NEW (t) << 7)
-				| (DECL_DECLARED_INLINE_P (t) << 8)
-				| (DECL_STATIC_CHAIN (t) << 9)
-				| (DECL_NO_INLINE_WARNING_P (t) << 10)
-				| (DECL_NO_INSTRUMENT_FUNCTION_ENTRY_EXIT (t) << 11)
-				| (DECL_NO_LIMIT_STACK (t) << 12)
-				| (DECL_DISREGARD_INLINE_LIMITS (t) << 13)
-				| (DECL_PURE_P (t) << 14)
-				| (DECL_LOOPING_CONST_OR_PURE_P (t) << 15));
+      hstate.add_flag (DECL_STATIC_CONSTRUCTOR (t));
+      hstate.add_flag (DECL_STATIC_DESTRUCTOR (t));
+      hstate.add_flag (DECL_UNINLINABLE (t));
+      hstate.add_flag (DECL_POSSIBLY_INLINED (t));
+      hstate.add_flag (DECL_IS_NOVOPS (t));
+      hstate.add_flag (DECL_IS_RETURNS_TWICE (t));
+      hstate.add_flag (DECL_IS_MALLOC (t));
+      hstate.add_flag (DECL_IS_OPERATOR_NEW (t));
+      hstate.add_flag (DECL_DECLARED_INLINE_P (t));
+      hstate.add_flag (DECL_STATIC_CHAIN (t));
+      hstate.add_flag (DECL_NO_INLINE_WARNING_P (t));
+      hstate.add_flag (DECL_NO_INSTRUMENT_FUNCTION_ENTRY_EXIT (t));
+      hstate.add_flag (DECL_NO_LIMIT_STACK (t));
+      hstate.add_flag (DECL_DISREGARD_INLINE_LIMITS (t));
+      hstate.add_flag (DECL_PURE_P (t));
+      hstate.add_flag (DECL_LOOPING_CONST_OR_PURE_P (t));
+      hstate.commit_flag ();
       if (DECL_BUILT_IN_CLASS (t) != NOT_BUILT_IN)
 	hstate.add_int (DECL_FUNCTION_CODE (t));
     }
 
   if (CODE_CONTAINS_STRUCT (code, TS_TYPE_COMMON))
     {
-      hstate.add_int (TYPE_STRING_FLAG (t)
-					| (TYPE_NO_FORCE_BLK (t) << 1)
-					| (TYPE_NEEDS_CONSTRUCTING (t) << 2)
-					| (TYPE_PACKED (t) << 3)
-					| (TYPE_RESTRICT (t) << 4)
-					| (TYPE_USER_ALIGN (t) << 5)
-					| (TYPE_READONLY (t) << 6)
-					| (TYPE_MODE (t) << 7));
+      hstate.add_wide_int (TYPE_MODE (t));
+      hstate.add_flag (TYPE_STRING_FLAG (t));
+      hstate.add_flag (TYPE_NO_FORCE_BLK (t));
+      hstate.add_flag (TYPE_NEEDS_CONSTRUCTING (t));
+      hstate.add_flag (TYPE_PACKED (t));
+      hstate.add_flag (TYPE_RESTRICT (t));
+      hstate.add_flag (TYPE_USER_ALIGN (t));
+      hstate.add_flag (TYPE_READONLY (t));
       if (RECORD_OR_UNION_TYPE_P (t))
 	{
-	  add_flag (TYPE_TRANSPARENT_AGGR (t));
-	  add_flag (TYPE_FINAL_P (t));
+	  hstate.add_flag (TYPE_TRANSPARENT_AGGR (t));
+	  hstate.add_flag (TYPE_FINAL_P (t));
 	}
       else if (code == ARRAY_TYPE)
-	add_flag (TYPE_NONALIASED_COMPONENT (t));
-      commit_flag ();
+	hstate.add_flag (TYPE_NONALIASED_COMPONENT (t));
+      hstate.commit_flag ();
       hstate.add_int (TYPE_PRECISION (t));
       hstate.add_int (TYPE_ALIGN (t));
       hstate.add_int ((TYPE_ALIAS_SET (t) == 0
