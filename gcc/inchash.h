@@ -43,6 +43,7 @@ class inchash
   inchash (hashval_t seed = 0)
   {
     val = seed;
+    bits = 0;
   }
 
   /* End incremential hashing and provide the final value.  */
@@ -81,8 +82,20 @@ class inchash
     val = iterative_hash_hashval_t (other.val, val);
   }
 
+  void add_flag (bool flag)
+  {
+    bits = (bits << 1) | flag;
+  }
+
+  void commit_flag ()
+  {
+    add_int (bits);
+    bits = 0;
+  }
+
  private:
   hashval_t val;
+  unsigned bits;
 };
 
 #endif
