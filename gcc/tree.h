@@ -4290,8 +4290,7 @@ extern void iterative_hstate_expr (const_tree, inchash &);
    TREE with SEED.  */
 static inline hashval_t iterative_hash_expr(const_tree tree, hashval_t seed)
 {
-  inchash hstate;
-  hstate.begin (seed);
+  inchash hstate (seed);
   iterative_hstate_expr (tree, hstate);
   return hstate.end ();
 }
