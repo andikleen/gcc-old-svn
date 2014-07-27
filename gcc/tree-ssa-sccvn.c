@@ -612,6 +612,7 @@ hashval_t
 vn_reference_compute_hash (const vn_reference_t vr1)
 {
   inchash hstate;
+  hashval_t result;
   int i;
   vn_reference_op_t vro;
   HOST_WIDE_INT off = -1;
@@ -649,10 +650,12 @@ vn_reference_compute_hash (const vn_reference_t vr1)
 	    vn_reference_op_compute_hash (vro, hstate);
 	}
     }
+  result = hstate.end ();
+  /* ??? We would ICE later if we hash instead of adding that in. */
   if (vr1->vuse)
-    hstate.add_int (SSA_NAME_VERSION (vr1->vuse));
+    result += SSA_NAME_VERSION (vr1->vuse);
 
-  return hstate.end ();
+  return result;
 }
 
 /* Return true if reference operations VR1 and VR2 are equivalent.  This
