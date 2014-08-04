@@ -2377,6 +2377,11 @@ Enables Link-Time Optimization for host tools during bootstrapping.
 @samp{BUILD_CONFIG=bootstrap-lto} is equivalent to adding
 @option{-flto} to @samp{BOOT_CFLAGS}.
 
+@item @samp{bootstrap-lto-slim}
+Enable slim Link-Time-Optimization for host tools during bootstrapping.
+This is a faster version of @code{bootstrap-lto}, but requires
+the host to support the linker plugin.
+
 @item @samp{bootstrap-debug}
 Verifies that the compiler generates the same executable code, whether
 or not it is asked to emit debug information.  To this end, this
