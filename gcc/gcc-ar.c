@@ -132,8 +132,49 @@ main (int ac, char **av)
   const char **nargv;
   bool is_ar = !strcmp (PERSONALITY, "ar");
   int exit_code = FATAL_EXIT_CODE;
+  int i;
 
   setup_prefixes (av[0]);
+
+  /* Not using getopt for now.  */
+  for (i = 0; i < ac; i++)
+      if (!strncmp (av[i], "-B", 2))
+	{
+	  const char *arg = av[i] + 2;
+	  const char *end;
+
+	  memmove (av + i, av + i + 1, sizeof (char *) * ((ac + 1) - i));
+	  ac--;
+	  if (*arg == 0)
+	    {
+	      arg = av[i] + 1;
+	      if (!arg)
+		{
+		  fprintf (stderr, "Usage: gcc-ar [-B prefix] ar arguments ...\n");
+		  exit (EXIT_FAILURE);
+		}
+	      memmove (av + i, av + i + 1, sizeof (char *) * ((ac + 1) - i));
+	      ac--;
+	      i++;
+	    }
+
+	  for (end = arg; *end; end++)
+	    ;
+	  end--;
+	  if (end > arg && *end != '/')
+	    {
+	      char *newarg = (char *)xmalloc (strlen(arg) + 2);
+
+	      strcpy (newarg, arg);
+	      strcat (newarg, "/");
+	      arg = newarg;
+	    }
+
+	  add_prefix (&path, arg);
+	  add_prefix (&target_path, arg);
+	  break;
+	}
+
 
   /* Find the GCC LTO plugin */
   plugin = find_a_file (&target_path, LTOPLUGINSONAME, R_OK);
