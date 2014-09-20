@@ -1074,6 +1074,15 @@ EXTRA_GCC_LIBS="$LIBS"
 LIBS="$save_LIBS"
 AC_SUBST(EXTRA_GCC_LIBS)
 
+# use tcmalloc, when available, which is faster than native mallocs
+# and has better debugging support
+save_LIBS="$LIBS"
+LIBS=
+AC_SEARCH_LIBS(tc_malloc, tcmalloc)
+EXTRA_GCC_LIBS="$LIBS"
+LIBS="$save_LIBS"
+AC_SUBST(EXTRA_GCC_LIBS)
+
 # Some systems put ldexp and frexp in libm instead of libc; assume
 # they're both in the same place.  jcf-dump needs them.
 save_LIBS="$LIBS"
