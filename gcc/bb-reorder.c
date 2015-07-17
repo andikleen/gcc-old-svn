@@ -1604,7 +1604,9 @@ find_rarely_executed_basic_blocks_and_crossing_edges (void)
     {
       bool cold_bb = false;
 
-      if (probably_never_executed_bb_p (cfun, bb))
+      if (profile_status_for_fn (cfun) == PROFILE_READ)
+	{
+	  if (probably_never_executed_bb_p (cfun, bb))
         {
           /* Handle profile insanities created by upstream optimizations
              by also checking the incoming edge weights. If there is a non-cold
@@ -1618,6 +1620,18 @@ find_rarely_executed_basic_blocks_and_crossing_edges (void)
                 break;
               }
         }
+	}
+      else
+        {
+	  /* No profile information. Just check edges.  */
+	  cold_bb = true;
+	  FOR_EACH_EDGE (e, ei, bb->preds)
+	    if (EDGE_FREQUENCY (e) >= BB_FREQ_MAX / (10*2))
+	      {
+	        cold_bb = false;
+		break;
+	      }
+	}
       if (cold_bb)
         {
           BB_SET_PARTITION (bb, BB_COLD_PARTITION);

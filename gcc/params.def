@@ -1177,6 +1177,11 @@ DEFPARAM (PARAM_MAX_FSM_THREAD_PATHS,
 	  "max-fsm-thread-paths",
 	  "Maximum number of new jump thread paths to create for a finite state automaton",
 	  50, 1, 999999)
+
+DEFPARAM (PARAM_PARTITION_COLD_MIN_FREQ,
+	  "partition-cold-min-freq",
+	  "When function partitioning and there is no profile information consider edges below this frequency cold.",
+	  10 * 2, 0, 10000 /* BB_FREQ_MAX */ )
 /*
 
 Local variables:
