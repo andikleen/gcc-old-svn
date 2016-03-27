@@ -41,6 +41,7 @@ load_lib profopt.exp
 set bprob_save_profopt_options $PROFOPT_OPTIONS
 set PROFOPT_OPTIONS [list { -O2 } { -O3  }]
 
+set profile_wrapper ""
 set profile_options "-fprofile-arcs"
 set feedback_options "-fbranch-probabilities"
 
@@ -54,4 +55,26 @@ foreach profile_option $profile_options feedback_option $feedback_options {
     }
 }
 
+if { ! [check_profiling_available "-fauto-profile"] } {
+    set PROFOPT_OPTIONS $bprob_save_profopt_options
+    return
+}
+
+set ext autogcov
+set profile_wrapper [profopt-perf-wrapper]
+set profile_options "-g"
+set feedback_options "-fauto-profile"
+set run_autofdo 1
+
+foreach profile_option $profile_options feedback_option $feedback_options {
+    foreach src [lsort [glob -nocomplain $srcdir/$subdir/bprob-*.c]] {
+        if ![runtest_file_p $runtests $src] then {
+            continue
+        }
+        profopt-execute $src
+    }
+}
+
+set run_autofdo ""
+set profile_wrapper ""
 set PROFOPT_OPTIONS $bprob_save_profopt_options

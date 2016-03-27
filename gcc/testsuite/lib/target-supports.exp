@@ -508,6 +508,11 @@ proc check_effective_target_keeps_null_pointer_checks { } {
     return 0
 }
 
+proc profopt-perf-wrapper { } {
+    global srcdir
+    return "$srcdir/../gcc-auto-profile -o perf.data "
+}
+
 # Return true if profiling is supported on the target.
 
 proc check_profiling_available { test_what } {
@@ -523,6 +528,24 @@ proc check_profiling_available { test_what } {
 	if { ![check_effective_target_tls_runtime] } {
 	    return 0
 	}
+    }
+
+    if { $test_what == "-fauto-profile" &&
+	 ! ([istarget x86_64-*-linux*] || [istarget i?86-*-linux*]) } {
+	# not cross compiling?
+	if { ![isnative] } {
+	    return 0
+	}
+	set event [profopt-perf-wrapper]
+	if {$event == "" } {
+	    return 0
+	}
+	set status [remote_exec host "gcc-auto-profile" "true -v /dev/null"]
+	if { [lindex $status 0] != 0 } {
+	    return 0
+	}
+	warning "autofdo not supported"
+	# Should check if create_gcov exists
     }
 
     # Support for -p on solaris2 relies on mcrt1.o which comes with the
