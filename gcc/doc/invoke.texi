@@ -8249,13 +8249,34 @@ which are generally profitable only with profile feedback available:
 If omitted, it defaults to @file{fbdata.afdo} in the current directory.
 
 Producing an AutoFDO profile data file requires running your program
-with the @command{perf} utility on a supported GNU/Linux target system.
+with the @command{gcc-auto-profile} utility on a supported GNU/Linux target system. @command{gcc-auto-profile} calls the @command{perf} utility.
+It also requires Last-Branch-Record support, which typically requires
+a new enough kernel not running virtualized.
+@command{gcc-auto-profile} accepts the same arguments as @command{perf record}.
 For more information, see @uref{https://perf.wiki.kernel.org/}.
 
-E.g.
 @smallexample
-perf record -e br_inst_retired:near_taken -b -o perf.data \
-    -- your_program
+gcc-auto-profile your_program
+@end smallexample
+
+On larger programs the resulting perf.data file may be very large.
+In this case it can be better to reduce the sampling rate.
+Collect samples every million taken branches:
+
+@smallexample
+gcc-auto-profile -c 1000000 program
+@end smallexample
+
+Or only profile representative run intervals of the program:
+
+@smallexample
+gcc-auto-profile -p PID-OF-PROGRAM sleep 5
+@end smallexample
+
+Profile complete system for 10 seconds (may require root)
+
+@smallexample
+gcc-auto-profile -a sleep 10
 @end smallexample
 
 Then use the @command{create_gcov} tool to convert the raw profile data
@@ -8266,7 +8287,7 @@ See @uref{https://github.com/google/autofdo}.
 E.g.
 @smallexample
 create_gcov --binary=your_program.unstripped --profile=perf.data \
-    --gcov=profile.afdo
+    --gcov=profile.afdo -gcov_version 1
 @end smallexample
 @end table
 
