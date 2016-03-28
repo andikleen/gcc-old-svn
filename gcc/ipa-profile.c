@@ -201,6 +201,8 @@ ipa_profile_generate_summary (void)
 		    if (h->hvalue.counters[2])
 		      {
 			struct cgraph_edge * e = node->get_edge (stmt);
+			if (!e)
+			  continue;
 			if (e && !e->indirect_unknown_callee)
 			  continue;
 			e->indirect_info->common_target_id
