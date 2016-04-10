@@ -36,20 +36,11 @@ along with GCC; see the file COPYING3.  If not see
 #include "trans-mem.h"
 #include "stor-layout.h"
 #include "print-tree.h"
-#include "tm_p.h"
-#include "basic-block.h"
-#include "flags.h"
+#include "cfganal.h"
 #include "input.h"
-#include "function.h"
-#include "gimple-pretty-print.h"
-#include "pointer-set.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
 #include "gimple-fold.h"
 #include "tree-eh.h"
-#include "gimple-expr.h"
 #include "is-a.h"
-#include "gimple.h"
 #include "gimple-iterator.h"
 #include "gimplify-me.h"
 #include "gimple-walk.h"
@@ -1100,14 +1091,15 @@ assign_discriminator (location_t locus, basic_block bb)
 
   for (gsi = gsi_start_bb (bb); !gsi_end_p (gsi); gsi_next (&gsi))
     {
-      gimple stmt = gsi_stmt (gsi);
+      gimple *stmt = gsi_stmt (gsi);
       location_t stmt_locus = gimple_location (stmt);
       if (same_line_p (locus, stmt_locus))
 	gimple_set_location (stmt,
 	    location_with_discriminator (stmt_locus, discriminator));
       /* Allocate a new discriminator for CALL stmt.  */
+      /* XXX: true correct argument? */
       if (gimple_code (stmt) == GIMPLE_CALL)
-	discriminator = next_discriminator_for_locus (curr_locus);
+	discriminator = next_discriminator_for_locus (stmt_locus, true);
     }
 }
 
@@ -1123,7 +1115,7 @@ assign_discriminators (void)
       edge e;
       edge_iterator ei;
       gimple_stmt_iterator gsi;
-      gimple last = last_stmt (bb);
+      gimple *last = last_stmt (bb);
 
       location_t locus = last ? gimple_location (last) : UNKNOWN_LOCATION;
       location_t curr_locus = UNKNOWN_LOCATION;
@@ -1134,7 +1126,7 @@ assign_discriminators (void)
 	 stmt could be a split point of a basic block.  */
       for (gsi = gsi_start_bb (bb); !gsi_end_p (gsi); gsi_next (&gsi))
 	{
-	  gimple stmt = gsi_stmt (gsi);
+	  gimple *stmt = gsi_stmt (gsi);
           if (gimple_code (stmt) == GIMPLE_CALL)
             {
 	      curr_locus = gimple_location (stmt);

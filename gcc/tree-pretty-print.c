@@ -1002,10 +1002,10 @@ dump_location (pretty_printer *pp, location_t loc)
   pp_decimal_int (pp, xloc.column);
   if (discriminator)
     {
-      pp_string (buffer, " discrim ");
-      pp_decimal_int (buffer, discriminator);
+      pp_string (pp, " discrim ");
+      pp_decimal_int (pp, discriminator);
     }
-  pp_string (buffer, "] ");
+  pp_string (pp, "] ");
 }
 
 

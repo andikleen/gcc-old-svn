@@ -407,7 +407,7 @@ print_rtx (const_rtx in_rtx)
 	    if (INSN_HAS_LOCATION (in_insn))
 	      {
 		expanded_location xloc = insn_location (in_insn);
-		int discriminator = insn_discriminator (in_rtx);
+		int discriminator = insn_discriminator (in_insn);
 		fprintf (outfile, " %s:%i", xloc.file, xloc.line);
 		if (discriminator)
 		  fprintf (outfile, " discrim %d", discriminator);

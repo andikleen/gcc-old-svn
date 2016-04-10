@@ -507,7 +507,8 @@ void
 diagnostic_report_current_module (diagnostic_context *context, location_t where)
 {
   const line_map_ordinary *map = NULL;
-  location = map_discriminator_location (location);
+  if (has_discriminator (where))
+    where = map_discriminator_location (where);
 
   if (pp_needs_newline (context->printer))
     {

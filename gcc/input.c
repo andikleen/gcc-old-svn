@@ -1154,8 +1154,10 @@ location_with_discriminator (location_t locus, int discriminator)
   locus = map_discriminator_location (locus);
 
   if (locus == UNKNOWN_LOCATION)
-    return block ? COMBINE_LOCATION_DATA (line_table, locus, block)
-		 : locus;
+    return block ? COMBINE_LOCATION_DATA (line_table, locus,
+					  get_range_from_loc (line_table, locus),
+					  block)
+      : locus;
 
   if (min_discriminator_location == UNKNOWN_LOCATION)
     {
@@ -1173,6 +1175,8 @@ location_with_discriminator (location_t locus, int discriminator)
     if (discriminator_location_locations[i] == locus)
       return (block
 	  ? COMBINE_LOCATION_DATA (line_table, min_discriminator_location + i,
+				   get_range_from_loc (line_table,
+						       min_discriminator_location + i),
 				   block)
 	  : min_discriminator_location + i);
 
@@ -1180,7 +1184,10 @@ location_with_discriminator (location_t locus, int discriminator)
   discriminator_location_discriminators.safe_push(discriminator);
 
   ret = (block
-      ? COMBINE_LOCATION_DATA (line_table, next_discriminator_location, block)
+      ? COMBINE_LOCATION_DATA (line_table, next_discriminator_location,
+			       get_range_from_loc (line_table,
+						   next_discriminator_location),
+			       block)
       : next_discriminator_location);
 
   next_discriminator_location++;
