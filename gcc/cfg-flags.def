@@ -182,6 +182,9 @@ DEF_EDGE_FLAG(TM_ABORT, 16)
    of any pass.  */
 DEF_EDGE_FLAG(IGNORE, 17)
 
+/* Edge probability predicted by __builtin_expect.  */
+DEF_EDGE_FLAG(PREDICTED_BY_EXPECT, 18)
+
 #endif
 
 /*

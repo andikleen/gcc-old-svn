@@ -2500,6 +2500,7 @@ rtl_verify_edges (void)
 			    | EDGE_IRREDUCIBLE_LOOP
 			    | EDGE_LOOP_EXIT
 			    | EDGE_CROSSING
+			    | EDGE_PREDICTED_BY_EXPECT
 			    | EDGE_PRESERVE)) == 0)
 	    n_branch++;
 
