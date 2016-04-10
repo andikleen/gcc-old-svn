@@ -339,7 +339,6 @@ Objective-C and Objective-C++ Dialects}.
 -fauto-inc-dec -fbranch-probabilities @gol
 -fbranch-target-load-optimize -fbranch-target-load-optimize2 @gol
 -fbtr-bb-exclusive -fcaller-saves @gol
--fcheck-branch-annotation @gol
 -fcombine-stack-adjustments -fconserve-stack @gol
 -fcompare-elim -fcprop-registers -fcrossjumping @gol
 -fcse-follow-jumps -fcse-skip-blocks -fcx-fortran-rules @gol
@@ -8290,12 +8289,6 @@ E.g.
 create_gcov --binary=your_program.unstripped --profile=perf.data \
     --gcov=profile.afdo -gcov_version 1
 @end smallexample
-
-@item -fcheck-branch-annotation
-@opindex -fcheck-branch-annotation
-Compare branch prediction result and autofdo profile information, store the
-result in a section in the generated elf file.
-
 @end table
 
 The following options control compiler behavior regarding floating-point 
