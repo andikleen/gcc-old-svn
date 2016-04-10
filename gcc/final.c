@@ -3039,7 +3039,7 @@ final_scan_insn (rtx_insn *insn, FILE *file, int optimize_p ATTRIBUTE_UNUSED,
 
 /* Return discriminator of the statement that produced this insn.  */
 int
-insn_discriminator (const_rtx insn)
+insn_discriminator (const rtx_insn *insn)
 {
   location_t loc = INSN_LOCATION (insn);
   if (!loc)
