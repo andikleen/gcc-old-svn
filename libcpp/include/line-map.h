@@ -135,8 +135,13 @@ typedef unsigned int linenum_type;
   0x60000000 | LINE_MAP_MAX_LOCATION_WITH_COLS
              |   Beyond this point, ordinary linemaps have 0 bits per column:
              |   each increment of the value corresponds to a new source line.
+	     |
+  0x70000001 | LINE_MAP_DISCRIMINATOR_START
+             |   Discriminators are used to distinguish different code on
+	     |   the same line in debug information.
+  0x78000000 | LINE_MAP_DISCRIMINATORS_END
              |
-  0x70000000 | LINE_MAP_MAX_SOURCE_LOCATION
+  0x78000000 | LINE_MAP_MAX_SOURCE_LOCATION
              |   Beyond the point, we give up on ordinary maps; attempts to
              |   create locations in them lead to UNKNOWN_LOCATION (0).
              |
@@ -146,7 +151,7 @@ typedef unsigned int linenum_type;
              |                   ^^^^^^^^^^^^^^^^^^^^^^^^
              |                               |
   -----------+-------------------------------+-------------------------------
-             | LINEMAPS_MACRO_LOWEST_LOCATION| Locations within macro maps
+  0x78000001 | LINEMAPS_MACRO_LOWEST_LOCATION| Locations within macro maps
              | macromap[m-1]->start_location | Start of last macro map
              |                               |
   -----------+-------------------------------+-------------------------------
@@ -380,6 +385,14 @@ struct GTY((tag ("1"))) line_map_ordinary : public line_map {
 /* This is the highest possible source location encoded within an
    ordinary or macro map.  */
 const source_location MAX_SOURCE_LOCATION = 0x7FFFFFFF;
+
+const source_location LINE_MAP_DISCRIMINATOR_START = 0x70000001;
+const source_location LINE_MAP_DISCRIMINATOR_END   = 0x78000000;
+
+/* Highest possible source location encoded within an ordinary or
+   macro map.  */
+const source_location LINE_MAP_MAX_SOURCE_LOCATION = 0x78000000;
+
 
 struct cpp_hashnode;
 
@@ -947,7 +960,7 @@ LINEMAPS_MACRO_LOWEST_LOCATION (const line_maps *set)
 {
   return LINEMAPS_MACRO_USED (set)
          ? MAP_START_LOCATION (LINEMAPS_LAST_MACRO_MAP (set))
-         : MAX_SOURCE_LOCATION;
+         : LINE_MAP_MAX_SOURCE_LOCATION;
 }
 
 /* Returns the last macro map allocated in the line table SET.  */

@@ -43,10 +43,6 @@ const source_location LINE_MAP_MAX_LOCATION_WITH_PACKED_RANGES = 0x50000000;
      gcc.dg/plugin/location-overflow-test-*.c.  */
 const source_location LINE_MAP_MAX_LOCATION_WITH_COLS = 0x60000000;
 
-/* Highest possible source location encoded within an ordinary or
-   macro map.  */
-const source_location LINE_MAP_MAX_SOURCE_LOCATION = 0x70000000;
-
 static void trace_include (const struct line_maps *, const line_map_ordinary *);
 static const line_map_ordinary * linemap_ordinary_map_lookup (struct line_maps *,
 							      source_location);
