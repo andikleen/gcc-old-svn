@@ -2805,6 +2805,7 @@ ix86_target_string (HOST_WIDE_INT isa, HOST_WIDE_INT isa2,
     { "-mmovdir64b",	OPTION_MASK_ISA_MOVDIR64B },
     { "-mwaitpkg",	OPTION_MASK_ISA_WAITPKG },
     { "-mcldemote",	OPTION_MASK_ISA_CLDEMOTE }
+    { "-mptwrite",	OPTION_MASK_ISA_PTWRITE }
   };
   static struct ix86_target_opts isa_opts[] =
   {
@@ -3509,7 +3510,7 @@ ix86_option_override_internal (bool main_args_p,
     | PTA_RDSEED | PTA_XSAVEC | PTA_XSAVES | PTA_CLFLUSHOPT | PTA_XSAVEOPT
     | PTA_FSGSBASE;
   const wide_int_bitmask PTA_GOLDMONT_PLUS = PTA_GOLDMONT | PTA_RDPID
-    | PTA_SGX;
+    | PTA_SGX | PTA_PTWRITE;
   const wide_int_bitmask PTA_TREMONT = PTA_GOLDMONT_PLUS | PTA_CLWB
     | PTA_GFNI;
   const wide_int_bitmask PTA_KNM = PTA_KNL | PTA_AVX5124VNNIW
@@ -5399,6 +5400,7 @@ ix86_valid_target_attribute_inner_p (tree args, char *p_strings[],
     IX86_ATTR_ISA ("movdir64b", OPT_mmovdir64b),
     IX86_ATTR_ISA ("waitpkg", OPT_mwaitpkg),
     IX86_ATTR_ISA ("cldemote", OPT_mcldemote),
+    IX86_ATTR_ISA ("ptwrite",	OPT_mptwrite),
 
     /* enum options */
     IX86_ATTR_ENUM ("fpmath=",	OPT_mfpmath_),
@@ -30827,8 +30829,10 @@ BDESC_VERIFYS (IX86_BUILTIN__BDESC_PCMPISTR_FIRST,
 	       IX86_BUILTIN__BDESC_PCMPESTR_LAST, 1);
 BDESC_VERIFYS (IX86_BUILTIN__BDESC_SPECIAL_ARGS_FIRST,
 	       IX86_BUILTIN__BDESC_PCMPISTR_LAST, 1);
-BDESC_VERIFYS (IX86_BUILTIN__BDESC_ARGS_FIRST,
+BDESC_VERIFYS (IX86_BUILTIN__BDESC_SPECIAL_ARGS2_FIRST,
 	       IX86_BUILTIN__BDESC_SPECIAL_ARGS_LAST, 1);
+BDESC_VERIFYS (IX86_BUILTIN__BDESC_ARGS_FIRST,
+	       IX86_BUILTIN__BDESC_SPECIAL_ARGS2_LAST, 1);
 BDESC_VERIFYS (IX86_BUILTIN__BDESC_ROUND_ARGS_FIRST,
 	       IX86_BUILTIN__BDESC_ARGS_LAST, 1);
 BDESC_VERIFYS (IX86_BUILTIN__BDESC_ARGS2_FIRST,
@@ -30854,8 +30858,9 @@ ix86_init_mmx_sse_builtins (void)
   const struct builtin_description * d;
   enum ix86_builtin_func_type ftype;
   size_t i;
+  tree decl;
 
-  /* Add all special builtins with variable number of operands.  */
+  /* Add isa1 special builtins with variable number of operands.  */
   for (i = 0, d = bdesc_special_args;
        i < ARRAY_SIZE (bdesc_special_args);
        i++, d++)

@@ -1280,7 +1280,7 @@ See RS/6000 and PowerPC Options.
 -mmmx  -msse  -msse2  -msse3  -mssse3  -msse4.1  -msse4.2  -msse4  -mavx @gol
 -mavx2  -mavx512f  -mavx512pf  -mavx512er  -mavx512cd  -mavx512vl @gol
 -mavx512bw  -mavx512dq  -mavx512ifma  -mavx512vbmi  -msha  -maes @gol
--mpclmul  -mfsgsbase  -mrdrnd  -mf16c  -mfma -mpconfig -mwbnoinvd @gol
+-mpclmul  -mfsgsbase  -mrdrnd  -mf16c  -mfma -mpconfig -mwbnoinvd -mptwrite @gol
 -mprefetchwt1  -mclflushopt  -mxsavec  -mxsaves @gol
 -msse4a  -m3dnow  -m3dnowa  -mpopcnt  -mabm  -mbmi  -mtbm  -mfma4  -mxop @gol
 -mlzcnt  -mbmi2  -mfxsr  -mxsave  -mxsaveopt  -mrtm  -mlwp @gol
@@ -27632,6 +27632,9 @@ preferred alignment to @option{-mpreferred-stack-boundary=2}.
 @need 200
 @itemx -mfsgsbase
 @opindex mfsgsbase
+@need 200
+@itemx -mptwrite
+@opindex mptwrite
 @need 200
 @itemx -mrdrnd
 @opindex mrdrnd
