@@ -423,6 +423,8 @@ const char *host_detect_local_cpu (int argc, const char **argv)
   unsigned int has_avx512vnni = 0, has_vaes = 0;
   unsigned int has_vpclmulqdq = 0;
 
+  unsigned int has_ptwrite = 0;
+
   bool arch;
 
   unsigned int l2sizekb = 0;
@@ -532,6 +534,13 @@ const char *host_detect_local_cpu (int argc, const char **argv)
       has_xsaveopt = eax & bit_XSAVEOPT;
       has_xsavec = eax & bit_XSAVEC;
       has_xsaves = eax & bit_XSAVES;
+    }
+
+  if (max_level >= 0x14)
+    {
+      __cpuid_count (0x14, 0, eax, ebx, ecx, edx);
+
+      has_ptwrite = ebx & bit_PTWRITE;
     }
 
   /* Check cpuid level of extended features.  */
@@ -1089,6 +1098,8 @@ const char *host_detect_local_cpu (int argc, const char **argv)
       const char *vaes = has_vaes ? " -mvaes" : " -mno-vaes";
       const char *vpclmulqdq = has_vpclmulqdq ? " -mvpclmulqdq" : " -mno-vpclmulqdq";
       const char *avx512bitalg = has_avx512bitalg ? " -mavx512bitalg" : " -mno-avx512bitalg";
+      const char *ptwrite = has_ptwrite ? " -mptwrite" : " -mno-ptwrite";
+
       options = concat (options, mmx, mmx3dnow, sse, sse2, sse3, ssse3,
 			sse4a, cx16, sahf, movbe, aes, sha, pclmul,
 			popcnt, abm, lwp, fma, fma4, xop, bmi, sgx, bmi2,
@@ -1100,7 +1111,7 @@ const char *host_detect_local_cpu (int argc, const char **argv)
 			avx512ifma, avx512vbmi, avx5124fmaps, avx5124vnniw,
 			clwb, mwaitx, clzero, pku, rdpid, gfni, ibt, shstk,
 			avx512vbmi2, avx512vnni, vaes, vpclmulqdq,
-			avx512bitalg, NULL);
+			avx512bitalg, ptwrite, NULL);
     }
 
 done:
