@@ -239,9 +239,10 @@ bool instrument_args (function *fun, bool force)
 	  if (!func)
 	    continue;
 
-	  tree sarg = ssa_default_def (fun, arg);
-	  /* This can happen with tail recursion. Don't log in this
-	     case for now.  */
+	  tree sarg = NULL;
+	  // ??? or force like sanopt?
+	  if (is_gimple_reg (arg))
+	    sarg = get_or_create_ssa_default_def (fun, arg);
 	  if (!sarg)
 	    continue;
 
