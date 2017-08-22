@@ -31873,6 +31873,19 @@ ix86_mangle_function_version_assembler_name (tree decl, tree id)
 }
 
 
+static tree
+ix86_vartrace_func (tree type)
+{
+  if (!(ix86_isa_flags2 & OPTION_MASK_ISA_PTWRITE))
+    return NULL;
+  if (TYPE_PRECISION (type) == 32)
+    return ix86_builtins [(int) IX86_BUILTIN_PTWRITE32];
+  else if (TYPE_PRECISION (type) == 64)
+    return ix86_builtins [(int) IX86_BUILTIN_PTWRITE64];
+  else
+    return NULL;
+}
+
 static tree 
 ix86_mangle_decl_assembler_name (tree decl, tree id)
 {
@@ -50848,6 +50861,9 @@ ix86_run_selftests (void)
 
 #undef TARGET_ASAN_SHADOW_OFFSET
 #define TARGET_ASAN_SHADOW_OFFSET ix86_asan_shadow_offset
+
+#undef TARGET_VARTRACE_FUNC
+#define TARGET_VARTRACE_FUNC ix86_vartrace_func
 
 #undef TARGET_GIMPLIFY_VA_ARG_EXPR
 #define TARGET_GIMPLIFY_VA_ARG_EXPR ix86_gimplify_va_arg

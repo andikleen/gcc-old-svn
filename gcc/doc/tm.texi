@@ -11933,6 +11933,10 @@ Address Sanitizer shadow memory address.  NULL if Address Sanitizer is not
 supported by the target.
 @end deftypefn
 
+@deftypefn {Target Hook} tree TARGET_VARTRACE_FUNC (tree @var{type})
+Return a builtin to call to trace variables or NULL if not supported by the target.
+@end deftypefn
+
 @deftypefn {Target Hook} {unsigned HOST_WIDE_INT} TARGET_MEMMODEL_CHECK (unsigned HOST_WIDE_INT @var{val})
 Validate target specific memory model mask bits. When NULL no target specific
 memory model bits are allowed.
