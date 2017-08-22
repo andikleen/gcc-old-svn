@@ -248,6 +248,8 @@ extern void ix86_expand_sse2_mulv4si3 (rtx, rtx, rtx);
 extern void ix86_expand_sse2_mulvxdi3 (rtx, rtx, rtx);
 extern void ix86_expand_sse2_abs (rtx, rtx);
 
+extern tree ix86_vartrace_func (machine_mode mode, bool force);
+
 /* In i386-c.c  */
 extern void ix86_target_macros (void);
 extern void ix86_register_pragmas (void);
