@@ -1872,6 +1872,65 @@ check_alignment_argument (location_t loc, const char *flag, const char *name)
   parse_and_check_align_values (flag, name, align_result, true, loc);
 }
 
+/* Parse vartrace options in P, updating flags OPTS at LOC and return
+   updated flags.  */
+
+static int
+parse_vartrace_options (const char *p, int opts, location_t loc)
+{
+  static struct {
+    const char *name;
+    int opt;
+  } vopts[] =
+      {
+       { "default",
+	 VARTRACE_ARGS | VARTRACE_RETURNS | VARTRACE_READS
+	 | VARTRACE_WRITES }, /* Keep as first entry.  */
+       { "all",
+	 VARTRACE_ARGS | VARTRACE_RETURNS | VARTRACE_READS
+	 | VARTRACE_WRITES | VARTRACE_LOCALS },
+       { "args", VARTRACE_ARGS },
+       { "returns", VARTRACE_RETURNS },
+       { "reads", VARTRACE_READS },
+       { "writes", VARTRACE_WRITES },
+       { "locals", VARTRACE_LOCALS },
+       { NULL, 0 }
+      };
+
+  if (*p == '=')
+    p++;
+  if (*p == 0)
+    return opts | vopts[0].opt;
+
+  if (!strcmp (p, "off"))
+    return 0;
+
+  while (*p)
+    {
+      unsigned len = strcspn (p, ",");
+      int i;
+
+      for (i = 0; vopts[i].name; i++)
+	{
+	  if (len == strlen (vopts[i].name) && !strncmp (p, vopts[i].name, len))
+	    {
+	      opts |= vopts[i].opt;
+	      break;
+	    }
+	}
+      if (vopts[i].name == NULL)
+	{
+	  error_at (loc, "invalid argument to %qs", "-fvartrace");
+	  break;
+	}
+
+      p += len;
+      if (*p == ',')
+	p++;
+    }
+  return opts;
+}
+
 /* Handle target- and language-independent options.  Return zero to
    generate an "unknown option" message.  Only options that need
    extra handling need to be listed here; if you simply want
@@ -2076,6 +2135,10 @@ common_handle_option (struct gcc_options *opts,
       break;
 
     case OPT__completion_:
+      break;
+
+    case OPT_fvartrace:
+      opts->x_flag_vartrace = parse_vartrace_options (arg, opts->x_flag_vartrace, loc);
       break;
 
     case OPT_fsanitize_:

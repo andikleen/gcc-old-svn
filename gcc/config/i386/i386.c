@@ -31900,6 +31900,35 @@ ix86_mangle_function_version_assembler_name (tree decl, tree id)
   return ret;
 }
 
+/* Hook to determine that TYPE can be traced.  Ignore target flags
+   if FORCE is true. Returns the tracing builtin if tracing is possible,
+   or otherwise NULL.  */
+
+static tree
+ix86_vartrace_func (tree type, bool force)
+{
+  if (!(ix86_isa_flags2 & OPTION_MASK_ISA_PTWRITE))
+    {
+      /* With force, as in checking for the attribute, ignore
+	 the current target settings. Otherwise it's not
+	 possible to declare vartrace variables outside
+	 an __attribute__((target("ptwrite"))) function
+	 if -mptwrite is not specified.  */
+      if (!force)
+	return NULL;
+      /* Initialize the builtins if missing, so that we have
+	 something to return.  */
+      if (!ix86_builtins[(int)IX86_BUILTIN_PTWRITE32])
+	ix86_add_new_builtins (0, OPTION_MASK_ISA_PTWRITE);
+    }
+
+  if (TYPE_PRECISION (type) == 32)
+    return ix86_builtins[(int) IX86_BUILTIN_PTWRITE32];
+  else if (TYPE_PRECISION (type) == 64)
+    return ix86_builtins[(int) IX86_BUILTIN_PTWRITE64];
+  else
+    return NULL;
+}
 
 static tree 
 ix86_mangle_decl_assembler_name (tree decl, tree id)
@@ -50893,6 +50922,9 @@ ix86_run_selftests (void)
 
 #undef TARGET_ASAN_SHADOW_OFFSET
 #define TARGET_ASAN_SHADOW_OFFSET ix86_asan_shadow_offset
+
+#undef TARGET_VARTRACE_FUNC
+#define TARGET_VARTRACE_FUNC ix86_vartrace_func
 
 #undef TARGET_GIMPLIFY_VA_ARG_EXPR
 #define TARGET_GIMPLIFY_VA_ARG_EXPR ix86_gimplify_va_arg
