@@ -2556,4 +2556,35 @@ fold_builtin_cpu (tree fndecl, tree *args)
   gcc_unreachable ();
 }
 
+/* Hook to determine that MODE can be traced.  Ignore target flags
+   if FORCE is true. Returns the tracing builtin if tracing is possible,
+   or otherwise NULL.  */
+
+tree
+ix86_vartrace_func (machine_mode mode, bool force)
+{
+  if (!(ix86_isa_flags2 & OPTION_MASK_ISA_PTWRITE))
+    {
+      /* With force, as in checking for the attribute, ignore
+	 the current target settings. Otherwise it's not
+	 possible to declare vartrace variables outside
+	 an __attribute__((target("ptwrite"))) function
+	 if -mptwrite is not specified.  */
+      if (!force)
+	return NULL;
+      /* Initialize the builtins if missing, so that we have
+	 something to return.  */
+      if (!ix86_builtins[(int)IX86_BUILTIN_PTWRITE32])
+	ix86_add_new_builtins (0, OPTION_MASK_ISA_PTWRITE);
+    }
+  // middle end will generate the necessary conversions.
+  if (GET_MODE_SIZE (mode) <= 4)
+    return ix86_builtins[(int) IX86_BUILTIN_PTWRITE32];
+  if (TARGET_64BIT && GET_MODE_SIZE (mode) <= 8)
+      return ix86_builtins[(int) IX86_BUILTIN_PTWRITE64];
+  // so far vectors and larger structs cannot be logged.
+  return NULL;
+}
+
+
 #include "gt-i386-builtins.h"

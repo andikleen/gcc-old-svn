@@ -22872,6 +22872,9 @@ ix86_run_selftests (void)
 #undef TARGET_ASAN_SHADOW_OFFSET
 #define TARGET_ASAN_SHADOW_OFFSET ix86_asan_shadow_offset
 
+#undef TARGET_VARTRACE_FUNC
+#define TARGET_VARTRACE_FUNC ix86_vartrace_func
+
 #undef TARGET_GIMPLIFY_VA_ARG_EXPR
 #define TARGET_GIMPLIFY_VA_ARG_EXPR ix86_gimplify_va_arg
 
