@@ -104,6 +104,8 @@ static tree handle_tls_model_attribute (tree *, tree, tree, int,
 					bool *);
 static tree handle_no_instrument_function_attribute (tree *, tree,
 						     tree, int, bool *);
+static tree handle_vartrace_attribute (tree *, tree,
+						     tree, int, bool *);
 static tree handle_no_profile_instrument_function_attribute (tree *, tree,
 							     tree, int, bool *);
 static tree handle_malloc_attribute (tree *, tree, tree, int, bool *);
@@ -325,7 +327,13 @@ const struct attribute_spec c_common_attribute_table[] =
   { "no_instrument_function", 0, 0, true,  false, false, false,
 			      handle_no_instrument_function_attribute,
 			      NULL },
-  { "no_profile_instrument_function",  0, 0, true, false, false, false,
+  { "vartrace", 	      0, 0, false,  false, false,
+			      handle_vartrace_attribute,
+			      false },
+  { "no_vartrace", 	      0, 0, false,  false, false,
+			      handle_vartrace_attribute,
+			      false },
+  { "no_profile_instrument_function",  0, 0, true, false, false,
 			      handle_no_profile_instrument_function_attribute,
 			      NULL },
   { "malloc",                 0, 0, true,  false, false, false,
@@ -764,6 +772,21 @@ handle_no_sanitize_undefined_attribute (tree *node, tree name, tree, int,
     add_no_sanitize_value (*node,
 			   SANITIZE_UNDEFINED | SANITIZE_UNDEFINED_NONDEFAULT);
 
+  return NULL_TREE;
+}
+
+/* Handle "vartrace"/"no_vartrace" attributes; arguments as in
+   struct attribute_spec.handler.  */
+
+static tree
+handle_vartrace_attribute (tree *node, tree, tree, int flags,
+			   bool *)
+{
+  if (TYPE_P (*node) && !(flags & (int) ATTR_FLAG_TYPE_IN_PLACE))
+    *node = build_variant_type_copy (*node);
+
+  /* Can apply to types, functions, variables.  */
+  /* We lookup it up later with lookup_attribute.  */
   return NULL_TREE;
 }
 

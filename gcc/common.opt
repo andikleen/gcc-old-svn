@@ -2803,6 +2803,30 @@ ftree-scev-cprop
 Common Report Var(flag_tree_scev_cprop) Init(1) Optimization
 Enable copy propagation of scalar-evolution information.
 
+fvartrace
+Common Report Var(flag_vartrace)
+Generate all variable tracking instrumentations, except for locals.
+
+fvartrace-returns
+Common Report Var(flag_vartrace_returns)
+Generate variable tracking instructions for function returns.
+
+fvartrace-args
+Common Report Var(flag_vartrace_args)
+Generate variable tracking instructions for function arguments.
+
+fvartrace-reads
+Common Report Var(flag_vartrace_reads)
+Generate variable tracking instructions for reads.
+
+fvartrace-writes
+Common Report Var(flag_vartrace_writes)
+Generate variable tracking instructions for writes.
+
+fvartrace-locals
+Common Report Var(flag_vartrace_locals)
+Generate variable tracking instructions for locals.
+
 ; -fverbose-asm causes extra commentary information to be produced in
 ; the generated assembly code (to make it more readable).  This option
 ; is generally only of use to those who actually need to read the

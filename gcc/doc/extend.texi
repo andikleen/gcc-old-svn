@@ -3171,6 +3171,13 @@ the standard C library can be guaranteed not to throw an exception
 with the notable exceptions of @code{qsort} and @code{bsearch} that
 take function pointer arguments.
 
+@item no_vartrace
+@cindex @code{no_vartrace} function or variable attribute
+Disable data tracing for the function or variable or structured field
+marked with this attribute. Applies to types. Currently implemented
+for x86 when the @option{ptwrite} target option is enabled for systems
+that support the @code{PTWRITE} instruction.
+
 @item optimize
 @cindex @code{optimize} function attribute
 The @code{optimize} attribute is used to specify that a function is to
@@ -3415,6 +3422,11 @@ inline assembly.
 When applied to a member function of a C++ class template, the
 attribute also means that the function is instantiated if the
 class itself is instantiated.
+
+@item vartrace
+@cindex @code{vartrace} function or variable attribute
+Enable data tracing for the function or variable or structure field
+marked with this attribute. Applies to types.
 
 @item visibility ("@var{visibility_type}")
 @cindex @code{visibility} function attribute

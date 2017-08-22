@@ -2703,6 +2703,33 @@ Don't use the @code{__cxa_get_exception_ptr} runtime routine.  This
 causes @code{std::uncaught_exception} to be incorrect, but is necessary
 if the runtime routine is not available.
 
+@item -fvartrace
+@opindex -fvartrace
+Insert trace instructions to trace variable values at runtime.
+Requires enabling a backend specific option, like @option{-mptwrite} to enable
+@code{PTWRITE} instruction generation on x86. @option{-fvartrace} traces
+arguments, return values, pointer references and globals, but no locals.
+
+@item -fvartrace-args
+@opindex -fvartrace-args
+Trace arguments.
+
+@item -fvartrace-returns
+@opindex -fvartrace-returns
+Trace return values.
+
+@item -fvartrace-reads
+@opindex -fvartrace-reads
+Trace reads.
+
+@item -fvartrace-writes
+@opindex -fvartrace-writes
+Trace writes.
+
+@item -fvartrace-locals
+@opindex -fvartrace-locals
+Insert code to trace local variables. This can have high overhead.
+
 @item -fvisibility-inlines-hidden
 @opindex fvisibility-inlines-hidden
 This switch declares that the user does not attempt to compare
