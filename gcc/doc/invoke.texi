@@ -2759,6 +2759,38 @@ Don't use the @code{__cxa_get_exception_ptr} runtime routine.  This
 causes @code{std::uncaught_exception} to be incorrect, but is necessary
 if the runtime routine is not available.
 
+@item -fvartrace
+@opindex -fvartrace=options
+Insert trace instructions to trace variables at runtime with a tracer
+such as Intel Processor Trace.
+
+Requires enabling a backend specific option, like @option{-mptwrite} to enable
+@code{PTWRITE} instruction generation on x86.
+
+Additional qualifiers can be specified after the =: @option{args}
+for arguments, @option{off} to disable, @option{returns} for tracing
+return values, @option{reads} to trace reads, @option{writes} to trace
+writes, @option{locals} to trace locals, @option{off} to disable all
+tracing, even override vartrace attributes.
+
+Default when nothing is specified is tracing reads, writes, arguments,
+returns, objects with a static or thread duration but no locals.
+
+Locals tracing may be very limited when the code is optimized.
+
+Multiple options can be separated by comma.
+
+When -fvartrace enabled, the compiler will add trace instructions. By
+default these trace options act like nops, unless tracing is
+enabled. For example to enable tracing on x86 Linux with Linux kernel
+/ perf 4.9 or later use:
+
+@smallexample
+gcc -fvartrace -o program -g program.c
+perf record -e intel_pt/pt=1,branch=0,ptw=1,fup_on_ptw=1/u program
+perf script -F +srcline
+@end smallexample
+
 @item -fvisibility-inlines-hidden
 @opindex fvisibility-inlines-hidden
 This switch declares that the user does not attempt to compare
