@@ -3415,6 +3415,14 @@ the standard C library can be guaranteed not to throw an exception
 with the notable exceptions of @code{qsort} and @code{bsearch} that
 take function pointer arguments.
 
+@item no_vartrace
+The @code{no_vartrace} attribute disables data tracing for
+the function [or variable or structure field or type] declared with
+the attribute. See @pxref{Common Variable Attributes} and
+@pxref{Common Type Attributes}. When specified for a function
+nothing in the function is traced. @code{no_vartrace} overrides
+any @code{vartrace} attributes for the specific object.
+
 @item optimize (@var{level}, @dots{})
 @item optimize (@var{string}, @dots{})
 @cindex @code{optimize} function attribute
@@ -3696,6 +3704,20 @@ inline assembly.
 When applied to a member function of a C++ class template, the
 attribute also means that the function is instantiated if the
 class itself is instantiated.
+
+@item vartrace
+@cindex @code{vartrace} function or variable attribute
+Enable data tracing for the function or variable or structure field
+or type marked with this attribute. When applied to a type all instances of the type
+will be traced. When applied to a structure or union all fields will be traced
+when individually accessed, however not when the whole record is copied.
+When applied to a structure field that field will be traced.
+For functions will trace arguments, returns, globals, pointer
+references (unless overriden with -fvartrace=off)
+
+Currently implemented for x86 when the @option{ptwrite} target option
+is enabled for systems that support the @code{PTWRITE} instruction,
+and supporting data types of 8 bytes or smaller.
 
 @item visibility ("@var{visibility_type}")
 @cindex @code{visibility} function attribute
@@ -7909,6 +7931,16 @@ struct __attribute__ ((aligned (N), warn_if_not_aligned (N)))
 A @{ /* @r{@dots{}} */ @};
 struct __attribute__ ((copy ( (struct A *)0)) B @{ /* @r{@dots{}} */ @};
 @end smallexample
+
+@cindex @code{vartrace} type attribute
+@cindex @code{no_vartrace} type attribute
+@item vartrace
+@itemx no_vartrace
+Specify that all instances of type should be variable traced
+or not variable traced. Can be also also applied to function
+types to disable tracing for all instances of that function type.
+Can be also applied to structure fields. See the description in
+@pxref{Variable Attributes} for more details.
 
 @item deprecated
 @itemx deprecated (@var{msg})

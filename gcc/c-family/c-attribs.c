@@ -105,6 +105,10 @@ static tree handle_tls_model_attribute (tree *, tree, tree, int,
 					bool *);
 static tree handle_no_instrument_function_attribute (tree *, tree,
 						     tree, int, bool *);
+static tree handle_vartrace_attribute (tree *, tree,
+						     tree, int, bool *);
+static tree handle_no_vartrace_attribute (tree *, tree,
+						     tree, int, bool *);
 static tree handle_no_profile_instrument_function_attribute (tree *, tree,
 							     tree, int, bool *);
 static tree handle_malloc_attribute (tree *, tree, tree, int, bool *);
@@ -236,6 +240,13 @@ static const struct attribute_spec::exclusions attr_const_pure_exclusions[] =
   ATTR_EXCL (NULL, false, false, false)
 };
 
+static const struct attribute_spec::exclusions attr_vartrace_exclusions[] =
+{
+  ATTR_EXCL ("vartrace", true, true, true),
+  ATTR_EXCL ("no_vartrace", true, true, true),
+  ATTR_EXCL (NULL, false, false, false)
+};
+
 /* Table of machine-independent attributes common to all C-like languages.
 
    Current list of processed common attributes: nonnull.  */
@@ -327,6 +338,12 @@ const struct attribute_spec c_common_attribute_table[] =
   { "no_instrument_function", 0, 0, true,  false, false, false,
 			      handle_no_instrument_function_attribute,
 			      NULL },
+  { "vartrace",		      0, 0, false,  false, false, false,
+			      handle_vartrace_attribute,
+			      attr_vartrace_exclusions },
+  { "no_vartrace",	      0, 0, false,  false, false, false,
+			      handle_no_vartrace_attribute,
+			      attr_vartrace_exclusions },
   { "no_profile_instrument_function",  0, 0, true, false, false, false,
 			      handle_no_profile_instrument_function_attribute,
 			      NULL },
@@ -967,6 +984,67 @@ handle_no_sanitize_undefined_attribute (tree *node, tree name, tree, int,
     add_no_sanitize_value (*node,
 			   SANITIZE_UNDEFINED | SANITIZE_UNDEFINED_NONDEFAULT);
 
+  return NULL_TREE;
+}
+
+/* Handle "vartrace" attribute; arguments as in struct
+   attribute_spec.handler.  */
+
+static tree
+handle_vartrace_attribute (tree *node, tree name, tree, int flags,
+			   bool *no_add_attrs)
+{
+  if (!VAR_OR_FUNCTION_DECL_P (*node) && !TYPE_P (*node) &&
+      TREE_CODE (*node) != FIELD_DECL)
+    {
+      warning (OPT_Wattributes, "%qE attribute ignored for object", name);
+      *no_add_attrs = true;
+      return NULL_TREE;
+    }
+
+  if (!targetm.vartrace_func)
+    {
+      warning (OPT_Wattributes, "%qE attribute not supported for target", name);
+      *no_add_attrs = true;
+      return NULL_TREE;
+    }
+
+  if (TREE_TYPE (*node)
+      && TREE_CODE (*node) != FUNCTION_DECL
+      && targetm.vartrace_func (TYPE_MODE (TREE_TYPE (*node)), true) ==
+      NULL_TREE)
+   {
+      warning (OPT_Wattributes, "%qE attribute not supported for type", name);
+      *no_add_attrs = true;
+      return NULL_TREE;
+   }
+
+  if (TYPE_P (*node) && !(flags & (int) ATTR_FLAG_TYPE_IN_PLACE))
+    *node = build_variant_type_copy (*node);
+
+  /* We look it up later with lookup_attribute.  */
+  return NULL_TREE;
+}
+
+/* Handle "no_vartrace" attribute; arguments as in struct
+   attribute_spec.handler.  */
+
+static tree
+handle_no_vartrace_attribute (tree *node, tree name, tree, int flags,
+			      bool *no_add_attrs)
+{
+  if (!VAR_OR_FUNCTION_DECL_P (*node) && !TYPE_P (*node)
+      && TREE_CODE (*node) != FIELD_DECL)
+    {
+      warning (OPT_Wattributes, "%qE attribute ignored", name);
+      *no_add_attrs = true;
+      return NULL_TREE;
+    }
+
+  if (TYPE_P (*node) && !(flags & (int) ATTR_FLAG_TYPE_IN_PLACE))
+    *node = build_variant_type_copy (*node);
+
+  /* We look it up later with lookup_attribute.  */
   return NULL_TREE;
 }
 

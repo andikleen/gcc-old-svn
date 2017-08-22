@@ -22331,6 +22331,36 @@ ix86_push_rounding (poly_int64 bytes)
   return ROUND_UP (bytes, UNITS_PER_WORD);
 }
 
+/* Hook to determine that MODE can be traced.  Ignore target flags
+   if FORCE is true. Returns the tracing builtin if tracing is possible,
+   or otherwise NULL.  */
+
+static tree
+ix86_vartrace_func (machine_mode mode, bool force)
+{
+  if (!(ix86_isa_flags2 & OPTION_MASK_ISA_PTWRITE))
+    {
+      /* With force, as in checking for the attribute, ignore
+	 the current target settings. Otherwise it's not
+	 possible to declare vartrace variables outside
+	 an __attribute__((target("ptwrite"))) function
+	 if -mptwrite is not specified.  */
+      if (!force)
+	return NULL;
+      /* Initialize the builtins if missing, so that we have
+	 something to return.  */
+      if (!ix86_builtins[(int)IX86_BUILTIN_PTWRITE32])
+	ix86_add_new_builtins (0, OPTION_MASK_ISA_PTWRITE);
+    }
+  // middle end will generate the necessary conversions.
+  if (GET_MODE_SIZE (mode) <= 4)
+    return ix86_builtins[(int) IX86_BUILTIN_PTWRITE32];
+  if (TARGET_64BIT && GET_MODE_SIZE (mode) <= 8)
+      return ix86_builtins[(int) IX86_BUILTIN_PTWRITE64];
+  // so far vectors and larger structs cannot be logged.
+  return NULL;
+}
+
 /* Target-specific selftests.  */
 
 #if CHECKING_P
@@ -22847,6 +22877,9 @@ ix86_run_selftests (void)
 
 #undef TARGET_ASAN_SHADOW_OFFSET
 #define TARGET_ASAN_SHADOW_OFFSET ix86_asan_shadow_offset
+
+#undef TARGET_VARTRACE_FUNC
+#define TARGET_VARTRACE_FUNC ix86_vartrace_func
 
 #undef TARGET_GIMPLIFY_VA_ARG_EXPR
 #define TARGET_GIMPLIFY_VA_ARG_EXPR ix86_gimplify_va_arg

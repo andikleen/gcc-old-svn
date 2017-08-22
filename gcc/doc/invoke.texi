@@ -504,6 +504,7 @@ Objective-C and Objective-C++ Dialects}.
 -fno-stack-limit  -fsplit-stack @gol
 -fvtable-verify=@r{[}std@r{|}preinit@r{|}none@r{]} @gol
 -fvtv-counts  -fvtv-debug @gol
+-fvartrace=@var{options} @gol
 -finstrument-functions @gol
 -finstrument-functions-exclude-function-list=@var{sym},@var{sym},@dots{} @gol
 -finstrument-functions-exclude-file-list=@var{file},@var{file},@dots{}}
@@ -2806,6 +2807,113 @@ destructors, but only works if your C library supports
 Don't use the @code{__cxa_get_exception_ptr} runtime routine.  This
 causes @code{std::uncaught_exception} to be incorrect, but is necessary
 if the runtime routine is not available.
+
+@item -fvartrace=@var{options}
+@opindex -fvartrace=options
+Insert trace instructions to trace reads and writes and other operations
+at runtime.
+
+Requires enabling a backend specific option, like @option{-mptwrite} to enable
+@code{PTWRITE} instruction generation on x86.
+
+Additional qualifiers can be specified after the equal:
+
+@itemize
+@item
+@option{args}
+for tracing arguments at the beginning of each function
+
+@item
+@option{returns} for tracing the values each function returns
+inside the function
+
+@item
+@option{reads} to trace memory reads, such as pointer, structure,
+union references, static variables and globals.
+
+@item
+@option{writes} to trace memory writes, similar to the reads above.
+
+@item
+@option{locals} to trace local variables. It will only trace locals
+when they appear after program optimization, many locals may
+actually be modified or eliminated by the optimizer.
+
+@item
+@option{off} to disable all
+tracing, even overriding @code{vartrace} attributes in the program
+
+@item
+@option{all}
+enable all options above.
+@end itemize
+
+Multiple options can be separated by comma.
+
+Default when nothing is specified (as in @option{-fvartrace}) is
+to trace reads, writes, arguments, returns, objects with a
+static or thread duration but no locals.
+
+Only individual variables or members can be logged, not complete structures,
+or variables larger than 8 bytes, such as vectors.
+
+For tracing the compiler will add trace instructions. By
+default these trace options act like nops, unless tracing is
+enabled at execution time, however there might be still
+some overhead from additional memory accesses and larger
+code foot print.
+
+For example to do varable (but no branch) tracing on x86 Linux
+with Linux kernel / Linux perf tool 4.9 or later and a CPU that
+supports Intel Processor Trace and PTWRITE use:
+
+@smallexample
+gcc -fvartrace -mptwrite -o program -g program.c
+perf record -e intel_pt/pt=1,branch=0,ptw=1,fup_on_ptw=1/u ./program
+@end smallexample
+
+Then output the variables with
+
+@smallexample
+perf script -F +srcline
+@end smallexample
+
+To do variable tracing including all branches
+
+@smallexample
+perf record -e intel_pt/ptw=1/u ./program
+perf script --itrace=bew -F +srcline
+@end smallexample
+
+Note that this may report lost data, and
+not be able to trace all updates in a long
+running program doing a lot of computation,
+because the program may generate trace data faster
+than perf or the CPU or the disk can process.
+
+In such a case consider to:
+
+@itemize
+@item
+Increase the perf buffer size through the kernel.perf_event_mlock_kb
+sysctl.
+
+@item
+Don't enable global tracing with this option, but
+only opt-in to tracing for specific strategic functions, variables,
+fields, or types of interest with the @code{vartrace} attribute.
+
+@item
+Avoid using locals tracing.
+
+@item
+Don't save all trace data continuously.
+Use perf snapshot mode with --snapshot and only save the trace
+buffer by sending SIGUSR1 to perf on events of interest,
+or only attach perf record for a short time with the -p
+option.
+
+@end itemize
 
 @item -fvisibility-inlines-hidden
 @opindex fvisibility-inlines-hidden

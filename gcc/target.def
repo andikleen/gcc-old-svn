@@ -4327,6 +4327,15 @@ supported by the target.",
  unsigned HOST_WIDE_INT, (void),
  NULL)
 
+/* Defines the builtin to trace variables, or NULL.  */
+DEFHOOK
+(vartrace_func,
+ "Return a builtin to call to trace variables of mode MODE or NULL if not supported\n\
+by the target. Ignore target configuration if FORCE is true. The builtin gets called with a\n\
+single argument of TYPE.",
+ tree, (machine_mode mode, bool force),
+ NULL)
+
 /* Functions relating to calls - argument passing, returns, etc.  */
 /* Members of struct call have no special macro prefix.  */
 HOOK_VECTOR (TARGET_CALLS, calls)

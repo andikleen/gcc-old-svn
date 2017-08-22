@@ -221,6 +221,10 @@ unsigned int flag_sanitize_recover = (SANITIZE_UNDEFINED | SANITIZE_UNDEFINED_NO
 Variable
 unsigned int flag_sanitize_coverage
 
+; What to instrument with vartrace
+Variable
+unsigned int flag_vartrace
+
 ; Flag whether a prefix has been added to dump_base_name
 Variable
 bool dump_base_name_prefixed = false
@@ -2885,6 +2889,10 @@ Does nothing. Preserved for backward compatibility.
 ftree-scev-cprop
 Common Report Var(flag_tree_scev_cprop) Init(1) Optimization
 Enable copy propagation of scalar-evolution information.
+
+fvartrace
+Common JoinedOrMissing Report Driver
+-fvartrace=default|all|locals|returns|args|reads|writes|off   Enable variable tracing instrumentation.
 
 ; -fverbose-asm causes extra commentary information to be produced in
 ; the generated assembly code (to make it more readable).  This option

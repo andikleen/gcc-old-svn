@@ -269,6 +269,16 @@ enum sanitize_code {
 				  | SANITIZE_BOUNDS_STRICT
 };
 
+/* Settings for flag_vartrace */
+enum vartrace_flags {
+  VARTRACE_LOCALS = 1 << 0,
+  VARTRACE_ARGS = 1 << 1,
+  VARTRACE_RETURNS = 1 << 2,
+  VARTRACE_READS = 1 << 3,
+  VARTRACE_WRITES = 1 << 4,
+  VARTRACE_OFF = 1 << 5
+};
+
 /* Settings of flag_incremental_link.  */
 enum incremental_link {
   INCREMENTAL_LINK_NONE,
