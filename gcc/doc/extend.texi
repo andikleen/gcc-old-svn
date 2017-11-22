@@ -3426,7 +3426,8 @@ class itself is instantiated.
 @item vartrace
 @cindex @code{vartrace} function or variable attribute
 Enable data tracing for the function or variable or structure field
-marked with this attribute. Applies to types.
+marked with this attribute. Applies to types. Will not trace locals,
+but arguments, returns, globals, pointer references.
 
 @item visibility ("@var{visibility_type}")
 @cindex @code{visibility} function attribute

@@ -2712,11 +2712,13 @@ arguments, return values, pointer references and globals, but no locals.
 
 @item -fvartrace-args
 @opindex -fvartrace-args
-Trace arguments.
+Trace arguments. Can be used independently or together with @option{-vartrace},
+or as @option{-fno-vartrace-args} to disable.
 
 @item -fvartrace-returns
 @opindex -fvartrace-returns
-Trace return values.
+Trace return values.  Can be used independently or together with @option{-vartrace},
+or as @option{-fno-vartrace-return} to disable.
 
 @item -fvartrace-reads
 @opindex -fvartrace-reads

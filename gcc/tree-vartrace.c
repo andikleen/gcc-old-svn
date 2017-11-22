@@ -203,12 +203,12 @@ static tree insert_trace (gimple_stmt_iterator *gi, tree val,
   return tvar;
 }
 
-/* Insert trace at GI for T if suitable memory or variable reference.
+/* Insert trace at GI for T in FUN if suitable memory or variable reference.
    Always if FORCE. Originally on ORIG_STMT.  */
 
 tree instrument_mem (gimple_stmt_iterator *gi, tree t,
-		    bool force,
-		    gimple *orig_stmt)
+		     bool force,
+		     gimple *orig_stmt)
 {
   if (supported_mem (t, force))
     return insert_trace (gi, t, orig_stmt);
@@ -222,6 +222,11 @@ bool instrument_args (function *fun, bool force)
 {
   bool changed = false;
   gimple_stmt_iterator gi;
+
+  /* Local tracing usually takes care of the argument too, when
+     they are read. This avoids redundant trace instructions.  */
+  if (flag_vartrace_locals)
+    return false;
 
   for (tree arg = DECL_ARGUMENTS (current_function_decl);
        arg != NULL_TREE;
@@ -294,6 +299,85 @@ static bool instrument_store (gimple_stmt_iterator *gi, gimple *stmt, bool force
   return true;
 }
 
+/* Instrument STMT at GI. Force if FORCE. CHANGED is the previous changed
+   state, which is also returned.  */
+
+bool instrument_assign (gimple_stmt_iterator *gi,
+			gimple *stmt, bool changed, bool force)
+{
+  gassign *gas = as_a <gassign *> (stmt);
+  bool read_force = force || flag_vartrace_reads;
+  tree t;
+
+  t = instrument_mem (gi, gimple_assign_rhs1 (gas),
+		      read_force,
+		      stmt);
+  if (t)
+    {
+      gimple_assign_set_rhs1 (gas, t);
+      changed = true;
+    }
+  if (gimple_num_ops (gas) > 2)
+    {
+      t = instrument_mem (gi, gimple_assign_rhs2 (gas),
+			  read_force,
+			  stmt);
+      if (t)
+	{
+	  gimple_assign_set_rhs2 (gas, t);
+	  changed = true;
+	}
+    }
+  if (gimple_num_ops (gas) > 3)
+    {
+      t = instrument_mem (gi, gimple_assign_rhs3 (gas),
+			  read_force,
+			  stmt);
+      if (t)
+	{
+	  gimple_assign_set_rhs3 (gas, t);
+	  changed = true;
+	}
+      }
+  if (gimple_num_ops (gas) > 4)
+    gcc_unreachable ();
+  if (gimple_store_p (stmt))
+    changed |= instrument_store (gi, stmt, flag_vartrace_writes || force);
+  if (changed)
+    update_stmt (stmt);
+  return changed;
+}
+
+/* Instrument return in function FUN at statement STMT at GI, force if
+   FORCE.  CHANGED is the changed flag, which is also returned.  */
+
+static bool instrument_return (function *fun,
+			       gimple_stmt_iterator *gi,
+			       gimple *stmt, bool changed,
+			       bool force)
+{
+  tree restype = TREE_TYPE (TREE_TYPE (fun->decl));
+  greturn *gret = as_a <greturn *> (stmt);
+  tree rval = gimple_return_retval (gret);
+
+  /* Cannot handle complex C++ return values at this point, even
+     if they would collapse to a valid trace type.  */
+  if (rval
+      && useless_type_conversion_p (restype, TREE_TYPE (rval))
+      && supported_type_or_force (rval, flag_vartrace_returns || force))
+    {
+      if (tree tvar = insert_trace (gi, rval, stmt))
+	{
+	  changed = true;
+	  gimple_return_set_retval (gret, tvar);
+	  log_trace_code (NULL, gret, tvar);
+	  update_stmt (stmt);
+	}
+    }
+
+  return changed;
+}
+
 /* Insert vartrace calls for FUN.  */
 
 static unsigned int vartrace_execute (function *fun)
@@ -301,7 +385,6 @@ static unsigned int vartrace_execute (function *fun)
   basic_block bb;
   gimple_stmt_iterator gi;
   bool force = flag_vartrace;
-  tree tvar;
   bool changed;
 
   if (lookup_attribute ("vartrace", TYPE_ATTRIBUTES (TREE_TYPE (fun->decl)))
@@ -315,71 +398,14 @@ static unsigned int vartrace_execute (function *fun)
       {
 	gimple *stmt = gsi_stmt (gi);
 	if (is_gimple_assign (stmt) && !gimple_clobber_p (stmt))
-	  {
-	    gassign *gas = as_a <gassign *> (stmt);
-	    bool read_force = force || flag_vartrace_reads;
-	    tree t;
-
-	    t = instrument_mem (&gi, gimple_assign_rhs1 (gas),
-			       read_force,
-			       stmt);
-	    if (t)
-	      {
-		gimple_assign_set_rhs1 (gas, t);
-		changed = true;
-	      }
-	    if (gimple_num_ops (gas) > 2)
-	      {
-		t = instrument_mem (&gi, gimple_assign_rhs2 (gas),
-				   read_force,
-				   stmt);
-		if (t)
-		  {
-		    gimple_assign_set_rhs2 (gas, t);
-		    changed = true;
-		  }
-	      }
-	    if (gimple_num_ops (gas) > 3)
-	      {
-		t = instrument_mem (&gi, gimple_assign_rhs3 (gas),
-				   read_force,
-				   stmt);
-		if (t)
-		  {
-		    gimple_assign_set_rhs3 (gas, t);
-		    changed = true;
-		  }
-	      }
-	    if (gimple_num_ops (gas) > 4)
-	      gcc_unreachable ();
-	    if (gimple_store_p (stmt))
-	      changed |= instrument_store (&gi, stmt, flag_vartrace_writes || force);
-	    if (changed)
-	      update_stmt (stmt);
-	  }
+	  changed = instrument_assign (&gi, stmt, changed, force);
 	else if (gimple_code (stmt) == GIMPLE_RETURN)
 	  {
-	    tree restype = TREE_TYPE (TREE_TYPE (cfun->decl));
-	    greturn *gret = as_a <greturn *> (stmt);
-	    tree rval = gimple_return_retval (gret);
-	    /* Cannot handle complex C++ return values at this point, even
-	       if they would collapse to a valid trace type.  */
-	    if (rval
-		&& useless_type_conversion_p (restype, TREE_TYPE (rval))
-		&& supported_type_or_force (rval, flag_vartrace_returns || force))
-	      {
-		tvar = insert_trace (&gi, rval, stmt);
-		if (tvar)
-		  {
-		    changed = true;
-		    gimple_return_set_retval (gret, tvar);
-		    log_trace_code (NULL, gret, tvar);
-		    update_stmt (stmt);
-		  }
-	      }
-	    // must end a basic block
+	    changed = instrument_return (fun, &gi, stmt, changed, force);
+	    // must end basic block
 	    break;
 	  }
+
 	// instrument something else like CALL?
 	// We assume everything interesting is in a GIMPLE_ASSIGN
       }
