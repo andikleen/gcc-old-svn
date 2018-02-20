@@ -874,6 +874,10 @@ mfentry-name=
 Target RejectNegative Joined Var(fentry_name)
 Set name of __fentry__ symbol called at function entry.
 
+mfentry-section=
+Target RejectNegative Joined Var(fentry_section)
+Set name of section to record -mrecord-mcount calls (default __mcount_loc)
+
 mskip-rax-setup
 Target Report Var(flag_skip_rax_setup) Init(0)
 Skip setting up RAX register when passing variable arguments.
@@ -962,7 +966,7 @@ Force indirect call and jump via register.
 
 minstrument-return=
 Target Report RejectNegative Joined Enum(instrument_return) Var(ix86_instrument_return) Init(instrument_return_none)
-Instrument function exit in instrumented functions with __fentry__
+Instrument function exit in instrumented functions -pg -mfentry with call to specified function
 
 Enum
 Name(instrument_return) Type(enum instrument_return)

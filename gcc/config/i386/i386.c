@@ -42687,6 +42687,17 @@ current_fentry_name (const char **name)
   return true;
 }
 
+static bool
+current_fentry_section (const char **name)
+{
+  tree attr = lookup_attribute ("fentry_section",
+				DECL_ATTRIBUTES (current_function_decl));
+  if (!attr)
+    return false;
+  *name = TREE_STRING_POINTER (TREE_VALUE (TREE_VALUE (attr)));
+  return true;
+}
+
 /* Output assembler code to FILE to increment profiler label # LABELNO
    for profiling a function entry.  */
 void
@@ -42729,9 +42740,18 @@ x86_function_profiler (FILE *file, int labelno ATTRIBUTE_UNUSED)
       x86_print_call_or_nop (file, mcount_name);
     }
 
-  if (flag_record_mcount)
+  if (flag_record_mcount
+	|| lookup_attribute ("fentry_section",
+                                DECL_ATTRIBUTES (current_function_decl)))
     {
-      fprintf (file, "\t.section __mcount_loc, \"a\",@progbits\n");
+      const char *sname = "__mcount_loc";
+
+      if (current_fentry_section (&sname))
+	;
+      else if (fentry_section)
+	sname = fentry_section;
+
+      fprintf (file, "\t.section %s, \"a\",@progbits\n", sname);
       fprintf (file, "\t.%s 1b\n", TARGET_64BIT ? "quad" : "long");
       fprintf (file, "\t.previous\n");
     }
@@ -46562,7 +46582,7 @@ ix86_expand_round_sse4 (rtx op0, rtx op1)
   emit_move_insn (op0, res);
 }
 
-/* Handle fentry_name attribute.  */
+/* Handle fentry_name / fentry_section attribute.  */
 
 static tree
 ix86_handle_fentry_name (tree *node, tree name, tree args,
@@ -46650,6 +46670,8 @@ static const struct attribute_spec ix86_attribute_table[] =
   { "function_return", 1, 1, true, false, false,
     ix86_handle_fndecl_attribute, false },
   { "fentry_name", 1, 1, true, false, false,
+    ix86_handle_fentry_name, false },
+  { "fentry_section", 1, 1, true, false, false,
     ix86_handle_fentry_name, false },
   /* End element.  */
   { NULL,        0, 0, false, false, false, NULL, false }
