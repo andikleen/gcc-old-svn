@@ -42669,7 +42669,7 @@ x86_field_alignment (tree type, int computed)
 static void
 x86_print_call_or_nop (FILE *file, const char *target)
 {
-  if (flag_nop_mcount)
+  if (flag_nop_mcount || !strcmp (target, "nop"))
     /* 5 byte nop: nopl 0(%[re]ax,%[re]ax,1) */
     fprintf (file, "1:" ASM_BYTE "0x0f, 0x1f, 0x44, 0x00, 0x00\n");
   else
