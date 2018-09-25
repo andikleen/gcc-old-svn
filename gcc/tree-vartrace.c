@@ -169,7 +169,7 @@ static void log_trace_code (gimple *orig_stmt, gimple *code,
 			     TDF_VOPS|TDF_MEMSYMS);
 	}
       fprintf (dump_file, "type ");
-      print_generic_expr (dump_file, TREE_TYPE (val), 0);
+      print_generic_expr (dump_file, TREE_TYPE (val), TDF_SLIM);
       fputc ('\n', dump_file);
       fputc ('\n', dump_file);
     }
