@@ -2804,7 +2804,7 @@ ix86_target_string (HOST_WIDE_INT isa, HOST_WIDE_INT isa2,
     { "-mmwaitx",	OPTION_MASK_ISA_MWAITX },
     { "-mmovdir64b",	OPTION_MASK_ISA_MOVDIR64B },
     { "-mwaitpkg",	OPTION_MASK_ISA_WAITPKG },
-    { "-mcldemote",	OPTION_MASK_ISA_CLDEMOTE }
+    { "-mcldemote",	OPTION_MASK_ISA_CLDEMOTE },
     { "-mptwrite",	OPTION_MASK_ISA_PTWRITE }
   };
   static struct ix86_target_opts isa_opts[] =
@@ -30858,7 +30858,6 @@ ix86_init_mmx_sse_builtins (void)
   const struct builtin_description * d;
   enum ix86_builtin_func_type ftype;
   size_t i;
-  tree decl;
 
   /* Add isa1 special builtins with variable number of operands.  */
   for (i = 0, d = bdesc_special_args;
