@@ -93,6 +93,15 @@ log_op (tree op, const char *what)
     }
 }
 
+/* Log tree OP if verbose dump enabled.  */
+
+static void
+log_op_verbose (tree op, const char *what)
+{
+  if (dump_flags & TDF_DETAILS)
+    log_op (op, what);
+}
+
 /* Is tracing enabled with attributes ATTR.  */
 
 static attrstate
@@ -176,7 +185,7 @@ supported_op (tree op, vartrace_flags flag, bool log_temps)
   // log anything that references memory
   else if (TREE_CODE (op) == MEM_REF || TREE_CODE (op) == TARGET_MEM_REF)
     {
-      // handle locals that use mem_ref here?
+      // ??? Handle locals that use mem_ref here?
       if (s == force_on || (flag_vartrace & flag))
 	return true;
     }
@@ -339,13 +348,12 @@ instrument_args (function *fun)
 }
 
 /* Generate trace call for store ORIG at GI. Return true if
-   successfull. Return true if successfully inserted.  */
+   successfull.  */
 
 static bool
 instrument_store (gimple_stmt_iterator *gi, gimple *stmt, tree orig)
 {
-  if (dump_flags & TDF_DETAILS)
-    log_op (orig, "store");
+  log_op_verbose (orig, "store");
   if (!supported_op (orig, VARTRACE_WRITES, false))
     return false;
 
@@ -422,8 +430,7 @@ vartrace_visit_load (gimple *stmt, tree, tree op, void *data)
   visit_data *vd = (visit_data *)data;
   bool log_temps = false;
 
-  if (dump_flags & TDF_DETAILS)
-    log_op (op, "load op");
+  log_op_verbose (op, "load op");
   return supported_op (op, VARTRACE_READS, log_temps)
     && insert_trace (vd->gi, op, stmt, "stmt mem load", -1, true);
 }
@@ -435,8 +442,7 @@ vartrace_visit_store (gimple *stmt, tree, tree op, void *data)
 {
   visit_data *vd = (visit_data *)data;
 
-  if (dump_flags & TDF_DETAILS)
-    log_op (op, "store op");
+  log_op_verbose (op, "store op");
   return supported_op (op, VARTRACE_WRITES, false)
     && insert_trace (vd->gi, op, stmt, "stmt mem store", -1, true);
 }
@@ -482,6 +488,8 @@ vartrace_execute (function *fun)
 	    changed |= instrument_store (&gi, stmt, def);
 	  }
 
+	// For locals tracing need to handle uses, otherwise
+	// very little is traced with -O2
 	if (flag_vartrace & VARTRACE_LOCALS)
 	  {
 	    use_operand_p usep;
