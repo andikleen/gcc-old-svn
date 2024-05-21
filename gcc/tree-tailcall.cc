@@ -40,9 +40,11 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-eh.h"
 #include "dbgcnt.h"
 #include "cfgloop.h"
+#include "intl.h"
 #include "common/common-target.h"
 #include "ipa-utils.h"
 #include "tree-ssa-live.h"
+#include "diagnostic-core.h"
 
 /* The file implements the tail recursion elimination.  It is also used to
    analyze the tail calls in general, passing the results to the rtl level
@@ -402,6 +404,41 @@ propagate_through_phis (tree var, edge e)
   return var;
 }
 
+/* Report an error for failing to tail convert must call CALL
+   with error message ERR. Also clear the flag to prevent further
+   errors.  */
+
+static void
+maybe_error_musttail (gcall *call, const char *err)
+{
+  if (gimple_call_must_tail_p (call))
+    {
+      error_at (call->location, "cannot tail-call: %s", err);
+      /* Avoid another error. ??? If there are multiple reasons why tail
+	 calls fail it might be useful to report them all to avoid
+	 whack-a-mole for the user. But currently there is too much
+	 redundancy in the reporting, so keep it simple.  */
+      gimple_call_set_must_tail (call, false); /* Avoid another error.  */
+      gimple_call_set_tail (call, false);
+    }
+}
+
+/* Count succ edges for BB and return in NUM_OTHER and NUM_EH.  */
+
+static void
+bb_get_succ_edge_count (basic_block bb, int &num_other, int &num_eh)
+{
+  edge e;
+  edge_iterator ei;
+  num_eh = 0;
+  num_other = 0;
+  FOR_EACH_EDGE (e, ei, bb->succs)
+    if (e->flags & EDGE_EH)
+      num_eh++;
+    else
+      num_other++;
+}
+
 /* Argument for compute_live_vars/live_vars_at_stmt and what compute_live_vars
    returns.  Computed lazily, but just once for the function.  */
 static live_vars_map *live_vars;
@@ -426,8 +463,16 @@ find_tail_calls (basic_block bb, struct tailcall **ret, bool only_musttail)
   tree var;
 
   if (!single_succ_p (bb))
-    return;
+    {
+      int num_eh, num_other;
+      bb_get_succ_edge_count (bb, num_eh, num_other);
+      /* Allow EH edges so that we can give a better
+	 error message later.  */
+      if (num_other != 1)
+	return;
+    }
 
+  bool bad_stmt = false;
   for (gsi = gsi_last_bb (bb); !gsi_end_p (gsi); gsi_prev (&gsi))
     {
       stmt = gsi_stmt (gsi);
@@ -448,6 +493,12 @@ find_tail_calls (basic_block bb, struct tailcall **ret, bool only_musttail)
 	  /* Handle only musttail calls when not optimizing.  */
 	  if (only_musttail && !gimple_call_must_tail_p (call))
 	    return;
+	  if (bad_stmt)
+	    {
+	      maybe_error_musttail (call,
+			      _("memory reference or volatile after call"));
+	      return;
+	    }
 	  ass_var = gimple_call_lhs (call);
 	  break;
 	}
@@ -462,8 +513,13 @@ find_tail_calls (basic_block bb, struct tailcall **ret, bool only_musttail)
       /* If the statement references memory or volatile operands, fail.  */
       if (gimple_references_memory_p (stmt)
 	  || gimple_has_volatile_ops (stmt))
-	return;
+	{
+	  bad_stmt = true;
+	}
     }
+
+  if (bad_stmt)
+    return;
 
   if (gsi_end_p (gsi))
     {
@@ -489,13 +545,26 @@ find_tail_calls (basic_block bb, struct tailcall **ret, bool only_musttail)
   if (ass_var
       && !is_gimple_reg (ass_var)
       && !auto_var_in_fn_p (ass_var, cfun->decl))
-    return;
+    {
+      maybe_error_musttail (call, _("return value in memory"));
+      return;
+    }
+
+  if (cfun->calls_setjmp)
+    {
+      maybe_error_musttail (call, _("caller uses setjmp"));
+      return;
+    }
 
   /* If the call might throw an exception that wouldn't propagate out of
      cfun, we can't transform to a tail or sibling call (82081).  */
-  if (stmt_could_throw_p (cfun, stmt)
-      && !stmt_can_throw_external (cfun, stmt))
+  if ((stmt_could_throw_p (cfun, stmt)
+       && !stmt_can_throw_external (cfun, stmt)) || !single_succ_p (bb))
+  {
+    maybe_error_musttail (call,
+			  _("call may throw exception that does not propagate"));
     return;
+  }
 
   /* If the function returns a value, then at present, the tail call
      must return the same type of value.  There is conceptually a copy
@@ -524,7 +593,10 @@ find_tail_calls (basic_block bb, struct tailcall **ret, bool only_musttail)
   if (result_decl
       && may_be_aliased (result_decl)
       && ref_maybe_used_by_stmt_p (call, result_decl, false))
-    return;
+    {
+      maybe_error_musttail (call, _("tail call must be same type"));
+      return;
+    }
 
   /* We found the call, check whether it is suitable.  */
   tail_recursion = false;
@@ -605,6 +677,7 @@ find_tail_calls (basic_block bb, struct tailcall **ret, bool only_musttail)
 	    {
 	      if (local_live_vars)
 		BITMAP_FREE (local_live_vars);
+	      maybe_error_musttail (call, _("call invocation refers to locals"));
 	      return;
 	    }
 	  else
@@ -613,6 +686,7 @@ find_tail_calls (basic_block bb, struct tailcall **ret, bool only_musttail)
 	      if (bitmap_bit_p (local_live_vars, *v))
 		{
 		  BITMAP_FREE (local_live_vars);
+		  maybe_error_musttail (call, _("call invocation refers to locals"));
 		  return;
 		}
 	    }
@@ -658,17 +732,21 @@ find_tail_calls (basic_block bb, struct tailcall **ret, bool only_musttail)
 	continue;
 
       if (gimple_code (stmt) != GIMPLE_ASSIGN)
-	return;
+	{
+	  maybe_error_musttail (call, _("unhandled code after call"));
+	  return;
+	}
 
       /* This is a gimple assign. */
       par ret = process_assignment (as_a <gassign *> (stmt), gsi,
 				    &tmp_m, &tmp_a, &ass_var, to_move_defs);
-      if (ret == FAIL)
-	return;
+      if (ret == FAIL || (ret == TRY_MOVE && !tail_recursion))
+	{
+	  maybe_error_musttail (call, _("return value changed after call"));
+	  return;
+	}
       else if (ret == TRY_MOVE)
 	{
-	  if (! tail_recursion)
-	    return;
 	  /* Do not deal with checking dominance, the real fix is to
 	     do path isolation for the transform phase anyway, removing
 	     the need to compute the accumulators with new stmts.  */
@@ -716,16 +794,26 @@ find_tail_calls (basic_block bb, struct tailcall **ret, bool only_musttail)
   if (ret_var
       && (ret_var != ass_var
 	  && !(is_empty_type (TREE_TYPE (ret_var)) && !ass_var)))
-    return;
+    {
+      maybe_error_musttail (call, _("call must be the same type"));
+      return;
+    }
 
   /* If this is not a tail recursive call, we cannot handle addends or
      multiplicands.  */
   if (!tail_recursion && (m || a))
-    return;
+    {
+      maybe_error_musttail (call, _("operations after non tail recursive call"));
+      return;
+    }
 
   /* For pointers only allow additions.  */
   if (m && POINTER_TYPE_P (TREE_TYPE (DECL_RESULT (current_function_decl))))
-    return;
+    {
+      maybe_error_musttail (call,
+		      _("tail recursion with pointers can only use additions"));
+      return;
+    }
 
   /* Move queued defs.  */
   if (tail_recursion)
