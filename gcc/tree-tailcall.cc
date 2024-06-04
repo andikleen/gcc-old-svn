@@ -442,6 +442,11 @@ maybe_error_musttail (gcall *call, const char *err)
       gimple_call_set_must_tail (call, false); /* Avoid another error.  */
       gimple_call_set_tail (call, false);
     }
+  if (dump_file)
+    {
+      print_gimple_stmt (dump_file, call, 0, TDF_SLIM);
+      fprintf (dump_file, "Cannot convert: %s\n", err);
+    }
 }
 
 /* Count succ edges for BB and return in NUM_OTHER and NUM_EH.  */
@@ -492,7 +497,12 @@ find_tail_calls (basic_block bb, struct tailcall **ret, bool only_musttail,
       /* Allow EH edges so that we can give a better
 	 error message later.  */
       if (num_other != 1)
-	return;
+	{
+	  if (dump_file)
+	    fprintf (dump_file, "Basic block %d has %d eh / %d other edges\n",
+			   bb->index, num_eh, num_other);
+	  return;
+	}
     }
 
   bool bad_stmt = false;
@@ -537,6 +547,11 @@ find_tail_calls (basic_block bb, struct tailcall **ret, bool only_musttail,
       if (gimple_references_memory_p (stmt)
 	  || gimple_has_volatile_ops (stmt))
 	{
+	  if (dump_file)
+	    {
+	      fprintf (dump_file, "Cannot handle ");
+	      print_gimple_stmt (dump_file, stmt, 0);
+	    }
 	  bad_stmt = true;
 	}
     }
