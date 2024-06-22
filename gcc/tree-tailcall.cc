@@ -133,14 +133,20 @@ static tree m_acc, a_acc;
 
 static bitmap tailr_arg_needs_copy;
 
+static void maybe_error_musttail (gcall *call, const char *err);
+
 /* Returns false when the function is not suitable for tail call optimization
-   from some reason (e.g. if it takes variable number of arguments).  */
+   from some reason (e.g. if it takes variable number of arguments). CALL
+   is call to report for.  */
 
 static bool
-suitable_for_tail_opt_p (void)
+suitable_for_tail_opt_p (gcall *call)
 {
   if (cfun->stdarg)
-    return false;
+    {
+      maybe_error_musttail (call, _("caller uses stdargs"));
+      return false;
+    }
 
   return true;
 }
@@ -148,35 +154,47 @@ suitable_for_tail_opt_p (void)
 /* Returns false when the function is not suitable for tail call optimization
    for some reason (e.g. if it takes variable number of arguments).
    This test must pass in addition to suitable_for_tail_opt_p in order to make
-   tail call discovery happen.  */
+   tail call discovery happen. CALL is call to report error for.  */
 
 static bool
-suitable_for_tail_call_opt_p (void)
+suitable_for_tail_call_opt_p (gcall *call)
 {
   tree param;
 
   /* alloca (until we have stack slot life analysis) inhibits
      sibling call optimizations, but not tail recursion.  */
   if (cfun->calls_alloca)
-    return false;
+    {
+      maybe_error_musttail (call, _("caller uses alloca"));
+      return false;
+    }
 
   /* If we are using sjlj exceptions, we may need to add a call to
      _Unwind_SjLj_Unregister at exit of the function.  Which means
      that we cannot do any sibcall transformations.  */
   if (targetm_common.except_unwind_info (&global_options) == UI_SJLJ
       && current_function_has_exception_handlers ())
-    return false;
+    {
+      maybe_error_musttail (call, _("caller uses sjlj exceptions"));
+      return false;
+    }
 
   /* Any function that calls setjmp might have longjmp called from
      any called function.  ??? We really should represent this
      properly in the CFG so that this needn't be special cased.  */
   if (cfun->calls_setjmp)
-    return false;
+    {
+      maybe_error_musttail (call, _("caller uses setjmp"));
+      return false;
+    }
 
   /* Various targets don't handle tail calls correctly in functions
      that call __builtin_eh_return.  */
   if (cfun->calls_eh_return)
-    return false;
+    {
+      maybe_error_musttail (call, _("caller uses __builtin_eh_return"));
+      return false;
+    }
 
   /* ??? It is OK if the argument of a function is taken in some cases,
      but not in all cases.  See PR15387 and PR19616.  Revisit for 4.1.  */
@@ -184,7 +202,10 @@ suitable_for_tail_call_opt_p (void)
        param;
        param = DECL_CHAIN (param))
     if (TREE_ADDRESSABLE (param))
-      return false;
+      {
+	maybe_error_musttail (call, _("address of caller arguments taken"));
+	return false;
+      }
 
   return true;
 }
@@ -445,10 +466,12 @@ static live_vars_map *live_vars;
 static vec<bitmap_head> live_vars_vec;
 
 /* Finds tailcalls falling into basic block BB. The list of found tailcalls is
-   added to the start of RET. When ONLY_MUSTTAIL is set only handle musttail.  */
+   added to the start of RET. When ONLY_MUSTTAIL is set only handle musttail.
+   Update OPT_TAILCALLS as output parameter.  */
 
 static void
-find_tail_calls (basic_block bb, struct tailcall **ret, bool only_musttail)
+find_tail_calls (basic_block bb, struct tailcall **ret, bool only_musttail,
+		 bool &opt_tailcalls)
 {
   tree ass_var = NULL_TREE, ret_var, func, param;
   gimple *stmt;
@@ -526,10 +549,16 @@ find_tail_calls (basic_block bb, struct tailcall **ret, bool only_musttail)
       edge_iterator ei;
       /* Recurse to the predecessors.  */
       FOR_EACH_EDGE (e, ei, bb->preds)
-	find_tail_calls (e->src, ret, only_musttail);
+	find_tail_calls (e->src, ret, only_musttail, opt_tailcalls);
 
       return;
     }
+
+  if (!suitable_for_tail_opt_p (call))
+    return;
+
+  if (!suitable_for_tail_call_opt_p (call))
+    opt_tailcalls = false;
 
   /* If the LHS of our call is not just a simple register or local
      variable, we can't transform this into a tail or sibling call.
@@ -1200,17 +1229,12 @@ tree_optimize_tail_calls_1 (bool opt_tailcalls, bool only_mustcall)
   tree param;
   edge_iterator ei;
 
-  if (!suitable_for_tail_opt_p ())
-    return 0;
-  if (opt_tailcalls)
-    opt_tailcalls = suitable_for_tail_call_opt_p ();
-
   FOR_EACH_EDGE (e, ei, EXIT_BLOCK_PTR_FOR_FN (cfun)->preds)
     {
       /* Only traverse the normal exits, i.e. those that end with return
 	 statement.  */
       if (safe_is_a <greturn *> (*gsi_last_bb (e->src)))
-	find_tail_calls (e->src, &tailcalls, only_mustcall);
+	find_tail_calls (e->src, &tailcalls, only_mustcall, opt_tailcalls);
     }
 
   if (live_vars)
